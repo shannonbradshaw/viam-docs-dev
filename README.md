@@ -141,6 +141,7 @@ These are our working documents, not user-facing content:
 - [Target User Definition](./planning/target-user.md) 🟢
 - [Onboarding Strategy](./planning/onboarding-strategy.md) 🟡
 - [Block Definitions](./planning/block-definitions.md) 🟡
+- [Content Guidelines](./planning/content-guidelines.md) 🟡
 - [Hardware Recommendations](./planning/hardware-recommendations.md) 🔴
 - [Simulation Requirements](./planning/simulation-requirements.md) 🔴
 
@@ -158,5 +159,5 @@ These are our working documents, not user-facing content:
 | Maintain | 6 | 6 | 0 | 0 |
 | Reference | 4 | 4 | 0 | 0 |
 | Work Cells | 4 | 4 | 0 | 0 |
-| Planning | 6 | 2 | 2 | 2 |
-| **Total** | **66** | **61** | **3** | **2** |
+| Planning | 7 | 2 | 3 | 2 |
+| **Total** | **67** | **61** | **4** | **2** |

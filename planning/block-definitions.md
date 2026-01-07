@@ -8,6 +8,8 @@ Blocks are modular tutorials that can be composed into larger workflows. Each bl
 - Have clear prerequisites and outcomes
 - Map to specific problems from the lifecycle analysis
 
+See [Content Guidelines](./content-guidelines.md) for detailed authoring guidance.
+
 ---
 
 ## Foundation Blocks
