@@ -221,6 +221,39 @@ Not all blocks require physics. Here's where it matters:
 
 ## Appendix A: Questions for The Construct
 
+### Draft Outreach Email
+
+**Subject:** Partnership Inquiry: Browser-Based Robotics Simulation for Viam Onboarding
+
+Hi,
+
+I'm reaching out from Viam (viam.com) to explore a potential partnership around browser-based robotics simulation.
+
+**About Viam:** We're a software platform for building, deploying, and managing robotics applications. Our users configure hardware and services through our platform, write control logic using our SDKs, and scale from prototype to fleet.
+
+**The challenge:** We're redesigning our onboarding experience and want users to experience Viam's capabilities—including manipulation and mobile navigation—without requiring them to purchase hardware upfront. Arms and mobile bases are expensive; simulation lets users feel what's possible before they invest.
+
+**Why The Construct:** Your browser-based simulation infrastructure is exactly what we're looking for. We've evaluated the landscape (AWS RoboMaker is shutting down, Gazebo Classic is EOL) and The Construct stands out as the most mature browser-based option with real physics fidelity.
+
+**What we're exploring:**
+
+- Running Viam's server and component modules inside your simulation environments (alongside or instead of ROS)
+- Creating custom Gazebo worlds for three work cells: stationary vision, mobile base, and arm + bin picking
+- A user flow where Viam users land directly in simulation (not through the course catalog)
+- White-label or embedded options for branding continuity
+
+We have detailed technical and business questions, but wanted to first check: is this the kind of partnership you'd be open to discussing?
+
+If so, I'd welcome a call to walk through our use case and understand your platform's flexibility for integration partners.
+
+Best,
+[Name]
+[Title]
+Viam
+[email]
+
+---
+
 ### Technical Integration
 
 1. **Non-ROS control path:** Can simulated robots be controlled via non-ROS APIs? Viam has its own component APIs (camera, arm, base, gripper). Can we run viam-server alongside or instead of ROS, controlling simulated hardware directly?
