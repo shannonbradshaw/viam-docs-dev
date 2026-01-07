@@ -12,7 +12,7 @@ This is the living navigation for the new Viam documentation structure. Click an
 ## [Understand](./understand/INDEX.md) 🟡
 *What is Viam and why should I care?*
 
-- [What is Viam](./understand/what-is-viam.md) 🔴
+- [What is Viam](./understand/what-is-viam.md) 🟢
 - [How Viam Works](./understand/how-viam-works.md) 🔴
 - [What Problems Viam Solves](./understand/problems-viam-solves.md) 🟡
 
