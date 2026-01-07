@@ -33,7 +33,9 @@ This is the living navigation for the new Viam documentation structure. Click an
 ### [Foundation](./build/foundation/INDEX.md) 🔴
 - [Connect to Cloud](./build/foundation/connect-to-cloud.md) 🔴
 - [Add a Camera](./build/foundation/add-camera.md) 🔴
+- [Develop from Your IDE](./build/foundation/develop-from-ide.md) 🔴
 - [Capture and Sync Data](./build/foundation/capture-sync-data.md) 🔴
+- [Filter at the Edge](./build/foundation/filter-at-edge.md) 🔴
 - [Run ML Inference](./build/foundation/run-ml-inference.md) 🔴
 
 ### [Perception](./build/perception/INDEX.md) 🔴
@@ -95,6 +97,7 @@ This is the living navigation for the new Viam documentation structure. Click an
 - [OTA Updates](./scale/ota-updates.md) 🔴
 - [Staged Rollouts](./scale/staged-rollouts.md) 🔴
 - [Multi-tenancy](./scale/multi-tenancy.md) 🔴
+- [Customer Delivery](./scale/customer-delivery.md) 🔴
 
 ---
 
@@ -103,6 +106,7 @@ This is the living navigation for the new Viam documentation structure. Click an
 
 - [Remote Debugging](./maintain/remote-debugging.md) 🔴
 - [Log Access](./maintain/log-access.md) 🔴
+- [Scheduled Tasks](./maintain/scheduled-tasks.md) 🔴
 - [Pushing Hotfixes](./maintain/hotfixes.md) 🔴
 - [Model Updates and Retraining](./maintain/model-updates.md) 🔴
 - [Performance Degradation](./maintain/performance-degradation.md) 🔴
@@ -148,11 +152,11 @@ These are our working documents, not user-facing content:
 |---------|-------------|-----|-----|-----|
 | Understand | 3 | 2 | 1 | 0 |
 | Try | 3 | 3 | 0 | 0 |
-| Build | 25 | 25 | 0 | 0 |
+| Build | 27 | 27 | 0 | 0 |
 | Deploy | 5 | 5 | 0 | 0 |
-| Scale | 7 | 7 | 0 | 0 |
-| Maintain | 5 | 5 | 0 | 0 |
+| Scale | 8 | 8 | 0 | 0 |
+| Maintain | 6 | 6 | 0 | 0 |
 | Reference | 4 | 4 | 0 | 0 |
 | Work Cells | 4 | 4 | 0 | 0 |
 | Planning | 6 | 2 | 2 | 2 |
-| **Total** | **62** | **57** | **3** | **2** |
+| **Total** | **66** | **61** | **3** | **2** |

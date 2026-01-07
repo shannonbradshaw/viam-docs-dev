@@ -20,6 +20,8 @@ This document maps the problems you'll face at each stage and shows where Viam h
 
 **Communication protocols are arcane.** I2C, SPI, UART, CAN—each with its own timing, addressing, and failure modes. You didn't sign up to become a protocol expert.
 
+**Development is tied to the device.** You're SSH'ing in, editing files, restarting processes. The iteration loop is slow and frustrating.
+
 **There's no consistency.** Code for one camera doesn't work with another. Switching motors means rewriting control logic. Everything is bespoke.
 
 ### How Viam Helps
@@ -27,6 +29,8 @@ This document maps the problems you'll face at each stage and shows where Viam h
 Viam provides a **module registry** with pre-built, tested drivers for 200+ components. You configure your hardware—you don't write driver code.
 
 Communication protocols are **abstracted entirely**. You never think about I2C vs. SPI. You configure "this is a motor" and it works.
+
+**Develop from anywhere.** Write code on your laptop in your IDE. Run it against your robot over the network. No SSH, no file copying, no deploy step. Just run and see results. When latency matters, move the code to the device—same APIs, same code.
 
 The same **SDKs and APIs** work across all hardware. Switch cameras? Change one config line. Your code stays the same.
 
@@ -40,6 +44,8 @@ The same **SDKs and APIs** work across all hardware. Switch cameras? Change one 
 
 **The environment is hostile.** Lighting changes. Temperatures vary. Dust accumulates. Things that worked perfectly on your bench fail mysteriously in the field.
 
+**Calibration is tedious.** Camera-arm setups need precise spatial relationships. You're measuring offsets, calculating transforms, getting it wrong, measuring again.
+
 **Network access is complicated.** Your robot is behind a firewall. NAT makes inbound connections impossible. You can't just SSH in.
 
 **You can't see what's happening.** When something goes wrong, you're blind. Logs are on the device. Sensor feeds are inaccessible. Debugging requires physical presence.
@@ -47,6 +53,8 @@ The same **SDKs and APIs** work across all hardware. Switch cameras? Change one 
 ### How Viam Helps
 
 **Remote access works through firewalls.** WebRTC handles NAT traversal automatically. No VPN, no port forwarding, no IT department negotiations.
+
+**Pre-computed transforms** for common hardware combinations. Registry fragments include the spatial relationships your motion planner needs—no manual measurement required for supported camera-arm setups.
 
 **You can see everything remotely.** Live sensor feeds, component status, and logs—all accessible from the Viam app or your code.
 
@@ -70,7 +78,7 @@ The same **SDKs and APIs** work across all hardware. Switch cameras? Change one 
 
 **Provisioning is streamlined.** New devices connect to the cloud and pull their configuration automatically.
 
-**Configuration fragments** let you manage variants without code changes. Same application, different hardware—handled in config.
+**Fragments are reusable configurations.** Define a camera-arm combination, a vision pipeline, or an entire work cell once. Apply it to any number of machines. Override per-machine differences (different camera model, site-specific settings) without forking the base fragment.
 
 **Staged rollouts** let you push updates to one device, then ten, then all. Rollback if something goes wrong.
 
@@ -78,7 +86,7 @@ The same **SDKs and APIs** work across all hardware. Switch cameras? Change one 
 
 ## Stage 4: Fleet at Scale
 
-*You're operating hundreds or thousands of robots.*
+*You're operating hundreds or thousands of robots—and delivering to customers.*
 
 ### The Problems
 
@@ -86,7 +94,7 @@ The same **SDKs and APIs** work across all hardware. Switch cameras? Change one 
 
 **Updates are high-stakes.** A bad push can take down production. You need confidence before rolling out changes.
 
-**Customers expect dashboards.** They want to see their robots. You need to provide access without building everything from scratch.
+**Customers expect dashboards.** They want to see their robots. You need to provide access without building auth systems, billing infrastructure, and dashboards from scratch.
 
 ### How Viam Helps
 
@@ -94,7 +102,7 @@ The same **SDKs and APIs** work across all hardware. Switch cameras? Change one 
 
 **OTA updates at scale** with staged rollouts, canary deployments, and automatic rollback.
 
-**Multi-tenancy and embedded dashboards** let you give customers access to their own robots.
+**Customer delivery infrastructure built in.** White-label authentication with your branding. TypeScript SDK for web dashboards, Flutter SDK for mobile apps. Built-in billing with per-machine or per-data pricing tiers.
 
 ---
 
@@ -108,11 +116,15 @@ The same **SDKs and APIs** work across all hardware. Switch cameras? Change one 
 
 **Logs are scattered.** Getting logs off devices with intermittent connectivity is its own infrastructure project.
 
+**Maintenance tasks pile up.** Periodic calibrations, health checks, sensor readings—you're writing cron jobs and custom schedulers.
+
 **Models drift.** The ML model that worked at launch degrades over time. You need to retrain and redeploy.
 
 ### How Viam Helps
 
 **Remote log access** with offline buffering. Logs sync when connectivity returns.
+
+**Scheduled tasks without schedulers.** Run periodic sensor readings, daily calibrations, health checks at specified intervals—no cron jobs required.
 
 **Data pipelines** capture real-world performance continuously. Use it to identify issues and retrain models.
 
@@ -124,11 +136,11 @@ The same **SDKs and APIs** work across all hardware. Switch cameras? Change one 
 
 | Stage | Pain | Viam Solution |
 |-------|------|---------------|
-| Prototype | Hardware integration | Module registry, abstracted protocols |
-| Deploy | Remote access | WebRTC, NAT traversal |
+| Prototype | Hardware integration, slow iteration | Module registry, develop from anywhere |
+| Deploy | Calibration, remote access | Pre-computed transforms, WebRTC |
 | Scale | Configuration management | Fragments, staged rollouts |
-| Fleet | Visibility and updates | Monitoring, OTA, multi-tenancy |
-| Maintain | Remote debugging | Logs, data capture, model deployment |
+| Fleet | Visibility, updates, customer delivery | Monitoring, OTA, white-label auth, billing |
+| Maintain | Remote debugging, scheduled tasks | Logs, scheduled jobs, model deployment |
 
 ---
 

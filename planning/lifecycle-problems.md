@@ -44,7 +44,7 @@ Problems listed are new or change significantly at this stage.
 |---|---------|------|--------------|--------|
 | 2.1 | Environment differs from bench | Partial | Universal | Deployment |
 | 2.2 | Network connectivity at deployment site | Partial | Universal | Deployment |
-| 2.3 | Sensor calibration in situ | Partial | Universal | Deployment |
+| 2.3 | Sensor calibration in situ | Yes* | Universal | Deployment |
 | 2.4 | Unexpected environmental interactions | Partial | Universal | Deployment |
 | 2.5 | Initial configuration and setup on site | Yes | Universal | Deployment |
 | 2.6 | Establishing baseline "normal" behavior | Partial | Universal | Deployment |
@@ -58,6 +58,8 @@ Problems listed are new or change significantly at this stage.
 | 2.14 | Data transfer to cloud | Yes | Universal | Data/ML |
 | 2.15 | Iterating based on real-world performance | Partial | Universal | App Logic |
 | 2.16 | Handling edge cases discovered in field | No | Universal | App Logic |
+
+*\*2.3 Note: Registry fragments include pre-computed spatial transforms for common camera-arm combinations, eliminating manual calibration for supported hardware.*
 
 ---
 
@@ -92,7 +94,7 @@ Problems listed are new or change significantly at this stage.
 | 4.5 | Rollback when updates break things | Yes | Universal | Fleet |
 | 4.6 | Configuration drift detection | Yes | Universal | Fleet |
 | 4.7 | Compliance and security at scale | Partial | Variable | Fleet |
-| 4.8 | Billing and metering | Partial | Variable | Fleet |
+| 4.8 | Billing and metering | Yes | Variable | Fleet |
 | 4.9 | Multi-tenancy | Yes | Variable | Fleet |
 | 4.10 | End-user access and dashboards | Yes | Variable | Remote Access |
 | 4.11 | SLAs and reliability | Partial | Variable | Fleet |
@@ -120,6 +122,7 @@ Problems listed are new or change significantly at this stage.
 | 5.10 | End-of-life and decommissioning | Partial | Universal | Fleet |
 | 5.11 | Continuous improvement of behavior | Partial | Universal | App Logic |
 | 5.12 | Model drift and retraining | Partial | Variable | Data/ML |
+| 5.13 | Scheduled maintenance tasks | Yes | Universal | Fleet |
 
 ---
 
@@ -128,11 +131,11 @@ Problems listed are new or change significantly at this stage.
 | Stage | Yes | Partial | No | Total |
 |-------|-----|---------|-----|-------|
 | 1. Prototype | 13 | 5 | 3 | 21 |
-| 2. First Deployment | 7 | 7 | 2 | 16 |
+| 2. First Deployment | 8 | 6 | 2 | 16 |
 | 3. Multiple Units | 10 | 2 | 1 | 13 |
-| 4. Fleet at Scale | 9 | 7 | 0 | 16 |
-| 5. Ongoing Maintenance | 4 | 8 | 0 | 12 |
-| **Total** | **43** | **29** | **6** | **78** |
+| 4. Fleet at Scale | 10 | 6 | 0 | 16 |
+| 5. Ongoing Maintenance | 5 | 8 | 0 | 13 |
+| **Total** | **46** | **27** | **6** | **79** |
 
 ---
 

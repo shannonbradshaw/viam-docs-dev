@@ -19,7 +19,11 @@ Blocks are modular tutorials that can be composed into larger workflows. Each bl
 | Connect to Cloud | Compute board | Platform basics, remote access, WebRTC | 1.1, 1.6, 2.9 |
 | Add a Camera | Camera + compute | Component configuration, viewing feeds | 1.1, 1.2, 1.9 |
 | Capture and Sync Data | Camera + compute + cloud | Data pipeline, filtering, storage | 1.12, 2.13, 2.14 |
+| Filter at the Edge | Camera + compute + ML | Reduce bandwidth by filtering before sync | 2.13, 2.14 |
 | Run ML Inference | Camera + compute + model | Vision service, detections, classifications | 1.13 |
+| Develop from Your IDE | Laptop + robot | Run code remotely against hardware | 1.3, 1.21 |
+
+**Note on "Develop from Your IDE":** This block should be early in the Foundation sequence. It demonstrates immediate value—you can iterate on your laptop without SSH or file copying.
 
 ---
 

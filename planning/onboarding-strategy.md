@@ -4,13 +4,21 @@
 
 ---
 
-## Core Insight
+## Core Insights
 
-Viam's value proposition is strongest at scale (fleet management, data pipelines, OTA updates), but onboarding happens at scale=1. 
+**Insight 1:** Viam's value proposition is strongest at scale (fleet management, data pipelines, OTA updates), but onboarding happens at scale=1.
+
+**Insight 2:** Fragments are central to the Viam workflow—not just a fleet feature. A fragment can configure a camera-arm combination, a camera-to-object-detection pipeline, or an entire work cell. Work cells ARE fragments.
+
+**Insight 3:** "Develop from anywhere" is immediate value at Stage 1. You can run code from your laptop against robot hardware over the network—no SSH, no copying files, no deploy step. This is differentiated and demonstrable immediately.
 
 **The challenge:** How do we demonstrate value immediately without requiring users to imagine future benefits?
 
-**The approach:** Use simulation to let users experience the full lifecycle (all 5 stages) in miniature, then provide modular blocks for building with real hardware.
+**The approach:** 
+1. Lead with "develop from anywhere"—show the IDE-to-robot workflow immediately
+2. Use simulation to let users experience the full lifecycle (all 5 stages) in miniature
+3. Work cells are fragments—completing simulation means you have a reusable config
+4. Apply the same fragment to real hardware and it works
 
 ---
 
@@ -43,9 +51,9 @@ Each simulation walks through all 5 lifecycle stages in miniature:
 
 **Purpose:** Deep, polished experience for users ready to build
 
-**Approach:** Specified hardware configurations with blessed component lists
+**Approach:** Each work cell is a published fragment with blessed hardware. Users apply the fragment and get a working configuration.
 
-**Work Cells:**
+**Work Cells (each is a Fragment):**
 
 | Work Cell | Components | Applications Covered |
 |-----------|------------|----------------------|
@@ -53,10 +61,17 @@ Each simulation walks through all 5 lifecycle stages in miniature:
 | Mobile Base | Wheeled base + camera + lidar + Pi/Jetson | Warehouse AMR, patrol, delivery, agriculture |
 | Arm + Vision | Robot arm + camera + gripper + Pi/Jetson | Pick-and-place, food service, machine tending |
 
-Each work cell has:
+Each work cell fragment includes:
+- Component configurations for blessed hardware
+- Pre-computed transforms (for camera-arm setups, no manual calibration)
+- Service configurations (vision, motion, SLAM as applicable)
 - Blessed hardware list with links to purchase
-- Setup guide for hardware assembly
 - Curated path through relevant blocks
+
+**Fragment benefits:**
+- Apply the same fragment from simulation to real hardware
+- Override per-machine differences without forking the base config
+- Version control and rollback built in
 
 ### Path 3: Bring Your Own Hardware
 
@@ -101,17 +116,46 @@ Perception (if using vision)
 
 ## Simulation-to-Hardware Graduation
 
-The simulation should mirror real hardware work cells so users can:
+The simulation mirrors real hardware work cells. Each simulation IS a fragment:
 
-1. Complete simulation onboarding
+1. Complete simulation onboarding → you have a working fragment
 2. Purchase recommended hardware
-3. Apply the same configuration and code to real hardware
-4. See it "just work"
+3. Apply the same fragment to real hardware
+4. See it work in the physical world
 
 This requires:
 - Simulation component configs that match real hardware configs
 - Clear mapping from simulated components to purchasable hardware
-- Minimal changes required when transitioning
+- Fragment variable substitution for hardware differences
+
+---
+
+## Development Workflow Progression
+
+Viam supports a natural progression from experimentation to production:
+
+**Stage 1: Iterate from your IDE**
+- Write code on your laptop
+- Run against robot hardware over the network
+- No copying files, no deploy step
+- See results immediately
+
+**Stage 2: Run on the robot when latency matters**
+- Same code, same APIs
+- Just a different execution environment
+- For tight control loops that can't tolerate network latency
+
+**Stage 3: Package as a module**
+- When your code is stable, package it
+- viam-server manages lifecycle: starts on boot, restarts on failure
+- Reconfigure parameters without redeploying
+
+**Stage 4: Deploy through Registry**
+- Push to Registry with CLI
+- Version control, staged rollouts, rollback
+- OTA updates to fleet
+
+This progression should be explicit in the Build section—users should understand where they are and what comes next.
 
 ---
 
