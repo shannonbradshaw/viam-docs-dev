@@ -1,0 +1,19 @@
+{
+  "modules": [
+    {
+      "name": "gazebo-camera",
+      "executable_path": "/opt/viam/modules/viam-gazebo-camera/main.py",
+      "type": "local"
+    }
+  ],
+  "components": [
+    {
+      "name": "sim-camera",
+      "api": "rdk:component:camera",
+      "model": "viam-labs:camera:gazebo",
+      "attributes": {
+        "topic": "/world/camera_world/model/camera_post/link/camera_link/sensor/camera/image"
+      }
+    }
+  ]
+}

@@ -9,6 +9,44 @@
 
 ---
 
+## Quick Start
+
+```bash
+# 1. Build the Docker image
+cd poc/gazebo-camera
+docker build -t gazebo-viam-poc .
+
+# 2. Run the container
+docker run -it --rm -p 8080:8080 -p 8443:8443 gazebo-viam-poc
+
+# 3. Open GzWeb in browser
+open http://localhost:8080
+
+# 4. In another terminal, test the camera topic
+docker exec -it <container_id> gz topic -e -t /world/camera_world/model/camera_post/link/camera_link/sensor/camera/image
+```
+
+---
+
+## Project Structure
+
+```
+docs-dev/poc/gazebo-camera/    # This directory
+├── README.md                   # This file
+├── Dockerfile                  # Container with Gazebo + GzWeb
+├── entrypoint.sh              # Startup script
+└── worlds/
+    └── camera_world.sdf       # Gazebo world with camera
+
+viam-gazebo-camera/            # Separate repo: /Users/shannon.bradshaw/viam/viam-gazebo-camera
+├── main.py                    # Viam module
+├── meta.json                  # Module metadata
+├── requirements.txt           # Python dependencies
+└── README.md                  # Module documentation
+```
+
+---
+
 ## Prerequisites
 
 - Docker installed
