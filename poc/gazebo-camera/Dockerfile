@@ -1,7 +1,9 @@
-# Gazebo Harmonic + GzWeb POC for Viam
+# Gazebo Harmonic POC for Viam Camera Bridge
 FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
+# Required for protobuf compatibility with gz-msgs
+ENV PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
 
 # Install Gazebo Harmonic
 RUN apt-get update && apt-get install -y \
@@ -14,6 +16,13 @@ RUN apt-get update && apt-get install -y \
     && apt-get install -y gz-harmonic \
     && rm -rf /var/lib/apt/lists/*
 
+# Install xvfb for headless rendering (required for camera sensors)
+RUN apt-get update && apt-get install -y \
+    xvfb \
+    mesa-utils \
+    libgl1-mesa-glx \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install Python and gz-transport bindings
 RUN apt-get update && apt-get install -y \
     python3 \
@@ -22,49 +31,31 @@ RUN apt-get update && apt-get install -y \
     python3-gz-msgs10 \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Node.js for GzWeb
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
-    && apt-get install -y nodejs \
-    && rm -rf /var/lib/apt/lists/*
+# Install Python dependencies for Viam module and web viewer
+RUN pip3 install viam-sdk Pillow flask numpy
 
-# Install GzWeb dependencies
-RUN apt-get update && apt-get install -y \
-    git \
-    libjansson-dev \
-    libboost-dev \
-    imagemagick \
-    libtinyxml-dev \
-    cmake \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
-
-# Clone and build GzWeb
-WORKDIR /opt
-RUN git clone https://github.com/gazebo-web/gzweb.git
-WORKDIR /opt/gzweb
-RUN npm install
-
-# Install Viam server
-RUN curl -o /usr/local/bin/viam-server https://storage.googleapis.com/packages.viam.com/apps/viam-server/viam-server-stable-x86_64 \
-    && chmod +x /usr/local/bin/viam-server
-
-# Install Python dependencies for Viam module
-RUN pip3 install viam-sdk Pillow
-
-# Copy world files
+# Copy world files and models
 COPY worlds/ /opt/worlds/
+COPY models/ /opt/models/
 
-# Copy Viam module (will be mounted or copied in)
-RUN mkdir -p /opt/viam/modules
+# Set Gazebo resource path for custom models
+ENV GZ_SIM_RESOURCE_PATH=/opt/models
+
+# Copy Viam module
+COPY viam-gazebo-camera/ /opt/viam/modules/viam-gazebo-camera/
+
+# Copy web viewer
+COPY web_viewer.py /opt/web_viewer.py
 
 # Copy startup script
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# Expose ports
-# 8080 - GzWeb
-# 8443 - Viam server (if needed)
-EXPOSE 8080 8443
+# Copy Viam config
+COPY viam-config.json /opt/viam-config.json
+
+# Expose web viewer port
+EXPOSE 8080
 
 WORKDIR /opt
 

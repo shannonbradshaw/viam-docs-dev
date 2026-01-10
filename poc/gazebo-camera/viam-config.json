@@ -11,8 +11,9 @@
       "name": "sim-camera",
       "api": "rdk:component:camera",
       "model": "viam-labs:camera:gazebo",
+      "namespace": "rdk",
       "attributes": {
-        "topic": "/world/camera_world/model/camera_post/link/camera_link/sensor/camera/image"
+        "topic": "/camera"
       }
     }
   ]

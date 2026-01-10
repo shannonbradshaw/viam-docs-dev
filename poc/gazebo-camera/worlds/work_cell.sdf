@@ -1,0 +1,362 @@
+<?xml version="1.0" ?>
+<sdf version="1.8">
+  <world name="work_cell">
+
+    <!-- Physics settings -->
+    <physics name="1ms" type="ignored">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+
+    <!-- Required plugins -->
+    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
+    <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
+      <render_engine>ogre</render_engine>
+    </plugin>
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+
+    <!-- ==================== LIGHTING ==================== -->
+
+    <!-- Overhead industrial lighting -->
+    <light type="directional" name="overhead_light">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 3 0 0 0</pose>
+      <diffuse>0.9 0.9 0.9 1</diffuse>
+      <specular>0.3 0.3 0.3 1</specular>
+      <direction>0 0 -1</direction>
+    </light>
+
+    <!-- Fill light -->
+    <light type="directional" name="fill_light">
+      <cast_shadows>false</cast_shadows>
+      <pose>2 2 2 0 0 0</pose>
+      <diffuse>0.4 0.4 0.4 1</diffuse>
+      <direction>-0.5 -0.5 -0.5</direction>
+    </light>
+
+    <!-- ==================== WORK CELL STRUCTURE ==================== -->
+
+    <!-- Floor (2.5m x 2.5m work cell) -->
+    <model name="floor">
+      <static>true</static>
+      <pose>0 0 0 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>2.5 2.5</size>
+            </plane>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>2.5 2.5</size>
+            </plane>
+          </geometry>
+          <material>
+            <ambient>0.3 0.3 0.35 1</ambient>
+            <diffuse>0.3 0.3 0.35 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Work table (1.2m x 0.8m, surface at 0.75m) -->
+    <model name="work_table">
+      <static>true</static>
+      <pose>0.5 0 0 0 0 0</pose>
+      <link name="table_top">
+        <!-- Table surface at z=0.75m -->
+        <collision name="collision">
+          <pose>0 0 0.725 0 0 0</pose>
+          <geometry>
+            <box><size>1.2 0.8 0.05</size></box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode><mu>0.8</mu></ode>
+            </friction>
+          </surface>
+        </collision>
+        <visual name="visual">
+          <pose>0 0 0.725 0 0 0</pose>
+          <geometry>
+            <box><size>1.2 0.8 0.05</size></box>
+          </geometry>
+          <material>
+            <ambient>0.6 0.55 0.45 1</ambient>
+            <diffuse>0.6 0.55 0.45 1</diffuse>
+          </material>
+        </visual>
+        <!-- Table legs (from floor to table bottom) -->
+        <visual name="leg1">
+          <pose>0.55 0.35 0.35 0 0 0</pose>
+          <geometry><cylinder><radius>0.03</radius><length>0.7</length></cylinder></geometry>
+          <material><ambient>0.2 0.2 0.2 1</ambient></material>
+        </visual>
+        <visual name="leg2">
+          <pose>0.55 -0.35 0.35 0 0 0</pose>
+          <geometry><cylinder><radius>0.03</radius><length>0.7</length></cylinder></geometry>
+          <material><ambient>0.2 0.2 0.2 1</ambient></material>
+        </visual>
+        <visual name="leg3">
+          <pose>-0.55 0.35 0.35 0 0 0</pose>
+          <geometry><cylinder><radius>0.03</radius><length>0.7</length></cylinder></geometry>
+          <material><ambient>0.2 0.2 0.2 1</ambient></material>
+        </visual>
+        <visual name="leg4">
+          <pose>-0.55 -0.35 0.35 0 0 0</pose>
+          <geometry><cylinder><radius>0.03</radius><length>0.7</length></cylinder></geometry>
+          <material><ambient>0.2 0.2 0.2 1</ambient></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ==================== UFFactory xArm 6 ==================== -->
+    <!--
+         UFFactory xArm 6 - 6-DOF robotic arm
+         - Reach: 700mm
+         - Payload: 6kg
+         - Repeatability: ±0.1mm
+
+         Mounted on work table at origin
+    -->
+
+    <!-- UFFactory xArm6 with gripper and RealSense D435 -->
+    <!-- Mounted on table near the back edge -->
+    <include>
+      <uri>model://xarm6</uri>
+      <name>xarm6</name>
+      <pose>0.1 0 0.75 0 0 0</pose>
+    </include>
+
+    <!-- Mount arm to world (simulates bolting to table) -->
+    <joint name="xarm6_mount" type="fixed">
+      <parent>world</parent>
+      <child>xarm6::link_base</child>
+    </joint>
+
+    <!-- ==================== OVERHEAD DEPTH CAMERA ==================== -->
+    <!--
+         Simulates an Intel RealSense D435 or similar
+         Mounted overhead looking down at work surface
+
+         D435 specs:
+         - Depth: 640x480 @ 30fps
+         - RGB: 1920x1080 @ 30fps
+         - Range: 0.2m - 10m
+         - FOV: 87° x 58°
+    -->
+
+    <model name="overhead_camera_mount">
+      <static>true</static>
+      <pose>0.4 -0.8 1.8 0 0.9 1.2</pose>  <!-- Angled view of work cell -->
+
+      <!-- Camera housing -->
+      <link name="camera_housing">
+        <visual name="housing_visual">
+          <geometry>
+            <box><size>0.1 0.03 0.025</size></box>
+          </geometry>
+          <material>
+            <ambient>0.1 0.1 0.1 1</ambient>
+            <diffuse>0.1 0.1 0.1 1</diffuse>
+          </material>
+        </visual>
+
+        <!-- RGB Camera Sensor (overhead view) -->
+        <sensor name="overhead_rgb" type="camera">
+          <always_on>1</always_on>
+          <update_rate>30</update_rate>
+          <topic>overhead_camera</topic>
+          <camera>
+            <horizontal_fov>1.518</horizontal_fov>  <!-- 87 degrees -->
+            <image>
+              <width>640</width>
+              <height>480</height>
+              <format>R8G8B8</format>
+            </image>
+            <clip>
+              <near>0.2</near>
+              <far>10.0</far>
+            </clip>
+          </camera>
+        </sensor>
+      </link>
+
+      <!-- Mounting arm -->
+      <link name="mount_arm">
+        <pose>-0.3 0 0.35 0 -1.57 0</pose>
+        <visual name="visual">
+          <geometry>
+            <box><size>0.03 0.03 0.7</size></box>
+          </geometry>
+          <material>
+            <ambient>0.3 0.3 0.3 1</ambient>
+          </material>
+        </visual>
+      </link>
+
+      <joint name="mount_joint" type="fixed">
+        <parent>mount_arm</parent>
+        <child>camera_housing</child>
+      </joint>
+    </model>
+
+    <!-- ==================== OBJECTS ON WORK SURFACE ==================== -->
+
+    <!-- Parts bin -->
+    <model name="parts_bin">
+      <static>true</static>
+      <pose>0.9 0.25 0.8 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box><size>0.2 0.15 0.08</size></box>
+          </geometry>
+          <material>
+            <ambient>0.2 0.3 0.6 1</ambient>
+            <diffuse>0.2 0.3 0.6 1</diffuse>
+          </material>
+        </visual>
+        <collision name="collision">
+          <geometry>
+            <box><size>0.2 0.15 0.08</size></box>
+          </geometry>
+        </collision>
+      </link>
+    </model>
+
+    <!-- Target object 1: Red cube (pick target) -->
+    <model name="red_cube">
+      <pose>0.5 0.1 0.79 0 0 0.1</pose>
+      <link name="link">
+        <inertial>
+          <mass>0.1</mass>
+          <inertia>
+            <ixx>0.000017</ixx>
+            <iyy>0.000017</iyy>
+            <izz>0.000017</izz>
+          </inertia>
+        </inertial>
+        <visual name="visual">
+          <geometry>
+            <box><size>0.04 0.04 0.04</size></box>
+          </geometry>
+          <material>
+            <ambient>0.9 0.1 0.1 1</ambient>
+            <diffuse>0.9 0.1 0.1 1</diffuse>
+          </material>
+        </visual>
+        <collision name="collision">
+          <geometry>
+            <box><size>0.04 0.04 0.04</size></box>
+          </geometry>
+        </collision>
+      </link>
+    </model>
+
+    <!-- Target object 2: Green cylinder -->
+    <model name="green_cylinder">
+      <pose>0.55 -0.15 0.79 0 0 0</pose>
+      <link name="link">
+        <inertial>
+          <mass>0.08</mass>
+          <inertia>
+            <ixx>0.000012</ixx>
+            <iyy>0.000012</iyy>
+            <izz>0.000008</izz>
+          </inertia>
+        </inertial>
+        <visual name="visual">
+          <geometry>
+            <cylinder><radius>0.02</radius><length>0.05</length></cylinder>
+          </geometry>
+          <material>
+            <ambient>0.1 0.8 0.2 1</ambient>
+            <diffuse>0.1 0.8 0.2 1</diffuse>
+          </material>
+        </visual>
+        <collision name="collision">
+          <geometry>
+            <cylinder><radius>0.02</radius><length>0.05</length></cylinder>
+          </geometry>
+        </collision>
+      </link>
+    </model>
+
+    <!-- Target object 3: Blue sphere -->
+    <model name="blue_sphere">
+      <pose>0.7 0 0.79 0 0 0</pose>
+      <link name="link">
+        <inertial>
+          <mass>0.05</mass>
+          <inertia>
+            <ixx>0.000005</ixx>
+            <iyy>0.000005</iyy>
+            <izz>0.000005</izz>
+          </inertia>
+        </inertial>
+        <visual name="visual">
+          <geometry>
+            <sphere><radius>0.025</radius></sphere>
+          </geometry>
+          <material>
+            <ambient>0.1 0.2 0.9 1</ambient>
+            <diffuse>0.1 0.2 0.9 1</diffuse>
+          </material>
+        </visual>
+        <collision name="collision">
+          <geometry>
+            <sphere><radius>0.025</radius></sphere>
+          </geometry>
+        </collision>
+      </link>
+    </model>
+
+    <!-- Obstacle: Safety barrier -->
+    <model name="safety_barrier">
+      <static>true</static>
+      <pose>-0.8 0 0.5 0 0 0</pose>
+      <link name="link">
+        <visual name="post1">
+          <pose>0 0.4 0 0 0 0</pose>
+          <geometry>
+            <cylinder><radius>0.025</radius><length>1.0</length></cylinder>
+          </geometry>
+          <material>
+            <ambient>0.9 0.7 0.1 1</ambient>
+          </material>
+        </visual>
+        <visual name="post2">
+          <pose>0 -0.4 0 0 0 0</pose>
+          <geometry>
+            <cylinder><radius>0.025</radius><length>1.0</length></cylinder>
+          </geometry>
+          <material>
+            <ambient>0.9 0.7 0.1 1</ambient>
+          </material>
+        </visual>
+        <visual name="bar">
+          <pose>0 0 0.4 1.57 0 0</pose>
+          <geometry>
+            <cylinder><radius>0.02</radius><length>0.8</length></cylinder>
+          </geometry>
+          <material>
+            <ambient>0.9 0.7 0.1 1</ambient>
+          </material>
+        </visual>
+        <collision name="collision">
+          <pose>0 0 0.25 0 0 0</pose>
+          <geometry>
+            <box><size>0.05 0.85 1.0</size></box>
+          </geometry>
+        </collision>
+      </link>
+    </model>
+
+  </world>
+</sdf>
