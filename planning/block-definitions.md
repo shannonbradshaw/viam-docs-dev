@@ -111,6 +111,18 @@ See [Content Guidelines](./content-guidelines.md) for detailed authoring guidanc
 
 ---
 
+## Productize Blocks
+
+*Ship a product to your customers.*
+
+| Block | Components | What You Learn | Problems Addressed |
+|-------|------------|----------------|-------------------|
+| Build a Customer Dashboard | TypeScript SDK | Web apps, real-time data display | 4.9 |
+| Set Up White-Label Auth | Auth config | Customer login with your branding | 4.9 |
+| Configure Billing | Billing config | Per-machine/per-data pricing, metering | 4.8 |
+
+---
+
 ## Block Composition: Work Cells
 
 ### Stationary Vision Work Cell
@@ -136,6 +148,11 @@ Stationary Vision
 Fleet/Deployment
 ├── Configure Multiple Machines
 └── Monitor a Fleet
+        ↓
+Productize
+├── Build a Customer Dashboard
+├── Set Up White-Label Auth
+└── Configure Billing
 ```
 
 ### Mobile Base Work Cell
@@ -169,6 +186,11 @@ Fleet/Deployment
 ├── Configure Multiple Machines
 ├── Monitor a Fleet
 └── Push Updates
+        ↓
+Productize
+├── Build a Customer Dashboard
+├── Set Up White-Label Auth
+└── Configure Billing
 ```
 
 ### Arm + Vision Work Cell
@@ -200,6 +222,11 @@ Integration
 Fleet/Deployment
 ├── Configure Multiple Machines
 └── Monitor a Fleet
+        ↓
+Productize
+├── Build a Customer Dashboard
+├── Set Up White-Label Auth
+└── Configure Billing
 ```
 
 ---

@@ -35,7 +35,12 @@ Each tutorial needs:
 
 Blocks needed to support the three tutorials:
 
-- [ ] (list TBD based on tutorial design)
+**Productize (new):**
+- [ ] Build a Customer Dashboard (TypeScript SDK)
+- [ ] Set Up White-Label Auth
+- [ ] Configure Billing
+
+*Other blocks TBD based on tutorial design — most already defined in block-definitions.md*
 
 ---
 
@@ -47,6 +52,6 @@ Blocks needed to support the three tutorials:
 
 ## Notes
 
-- Tutorials walk users through all 5 lifecycle stages: Prototype → Deploy → Scale → Fleet → Maintain
+- Tutorials walk users through all 6 lifecycle stages: Prototype → Deploy → Scale → Fleet → Maintain → Productize
 - Each tutorial ~1-1.5 hours
 - Zero installation (browser-based)

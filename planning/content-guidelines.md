@@ -79,7 +79,35 @@ Our simulation paths (Try) assume nothing—they're true tutorials. Our blocks a
 
 ## Writing Style
 
-*To be developed: voice, tone, code sample conventions, etc.*
+*To be developed: voice, tone, etc.*
+
+---
+
+## Code Samples
+
+### Language Requirements
+
+All control logic code must be provided in both **Python** and **Go**.
+
+- Use tabbed code blocks so readers can switch between languages
+- Both versions should be functionally equivalent
+- Both must be tested and complete (copy-paste-able)
+
+### What Counts as "Control Logic"
+
+Code that interacts with Viam APIs to control or read from components:
+
+- Getting camera images
+- Running detections
+- Moving arms/bases
+- Reading sensor data
+- Sending commands
+
+### What Doesn't Need Both Languages
+
+- Shell commands (e.g., `viam module upload`)
+- Configuration snippets (JSON)
+- One-off debugging scripts
 
 ---
 
@@ -89,6 +117,7 @@ Before considering a block complete, verify:
 
 - [ ] Can be completed without prior blocks (using provided fragment + starter code)
 - [ ] Conceptual context explains why this matters
+- [ ] All control logic code provided in both Python and Go
 - [ ] All code samples are complete and tested
 - [ ] Verification step confirms success
 - [ ] Troubleshooting covers common failures

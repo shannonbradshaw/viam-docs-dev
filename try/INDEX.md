@@ -6,13 +6,14 @@
 
 ## Overview
 
-These browser-based simulations let you experience the full Viam platform without any hardware. Each simulation walks you through all five lifecycle stages:
+These browser-based simulations let you experience the full Viam platform without any hardware. Each simulation walks you through all six lifecycle stages:
 
 1. **Prototype** — Configure components, write control code
 2. **Deploy** — Move to a simulated "field" environment
 3. **Scale** — Add a second robot, see fleet features
 4. **Fleet** — Monitor health, push updates
 5. **Maintain** — Debug an issue, push a fix
+6. **Productize** — Build a customer-facing app with your branding
 
 ---
 
