@@ -49,18 +49,6 @@ By the end of this tutorial, you'll understand how to:
 
 **These patterns are the same whether you're working with a camera, a robot arm, or a warehouse full of mobile robots.**
 
-### This Tutorial vs. Others
-
-| Tutorial | Hardware | Best For |
-|----------|----------|----------|
-| **Stationary Vision** (this one) | Camera + Compute | Inspection, monitoring, counting |
-| Mobile Base | Wheeled robot + Lidar | Navigation, patrol, delivery |
-| Arm + Vision | Robot arm + Camera | Pick-and-place, assembly |
-
-All three tutorials teach the same core platform skills. Choose based on your interest or use case.
-
----
-
 ## Scenario
 
 You're building a **quality inspection station** for a manufacturing line. Parts move past a camera on a conveyor. Your system must:
