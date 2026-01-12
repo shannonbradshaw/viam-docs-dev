@@ -12,13 +12,24 @@
 
 ### What is Viam?
 
-Viam is a platform for building, deploying, and managing robotics applications. It handles the hard parts—hardware configuration & abstraction, remote access, fleet management, data pipelines, ML deployment—so you can focus on what your machine should *do*.
+Viam lets you build robotics applications the way you build other software. Viam abstracts away hardware concerns and services for common tasks to enable you to focus on your core robotics application. Declare your hardware in a config, write control logic against well-defined APIs for everything, push updates through a CLI. Viam is the development workflow you're used to, applied to physical machines.
 
-Viam works with:
-- **Cameras and sensors** — vision systems, environmental monitoring
-- **Robot arms** — pick-and-place, assembly, machine tending
-- **Mobile bases** — AMRs, delivery robots, patrol systems
-- **Any combination** — mobile manipulation, multi-robot coordination
+Viam works with any hardware:
+
+| Category | Examples |
+|----------|----------|
+| Cameras | Webcams, depth cameras, thermal, CSI |
+| Arms | 6-DOF robot arms, collaborative arms |
+| Bases | Wheeled, tracked, holonomic, drones |
+| Motors | DC, stepper, servo, brushless |
+| Sensors | IMU, GPS, ultrasonic, temperature, humidity |
+| Grippers | Parallel jaw, vacuum, custom end effectors |
+| Boards | Raspberry Pi, Jetson, Orange Pi, ESP32 |
+| LiDAR | 2D and 3D scanning |
+| Encoders | Rotary, absolute, incremental |
+| Gantries | Linear actuators, multi-axis systems |
+
+If your hardware isn't on the list, you can add support with a custom module.
 
 This tutorial uses the simplest work cell (camera + compute) to teach patterns that apply to *all* Viam applications.
 
