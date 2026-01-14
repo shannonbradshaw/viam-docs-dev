@@ -6,9 +6,9 @@ This document captures context and requirements for data egress documentation, b
 
 ---
 
-## Background: The Artemis Use Case
+## Background: Representative Use Case
 
-A customer building autonomous e-foils has a complex telemetry surface:
+A customer building autonomous watercraft has a complex telemetry surface:
 
 - **Volume:** Sensors sampling from 1 Hz to 1 kHz
 - **Latency tiers:**
@@ -61,7 +61,7 @@ Four patterns emerged from this discussion:
 
 ## Recommended Hybrid Architecture
 
-For customers like Artemis who want Viam as ingestion layer only:
+For customers who want Viam as ingestion layer only:
 
 1. **Safety-critical signals** — Route via webhooks to alerting infrastructure
 2. **Diagnostic/operational telemetry** — Pipelines compute roll-ups, available via SDK/API or pushed via webhook on window close
@@ -87,7 +87,7 @@ This keeps vendor responsibility at ingestion/transformation while customer owns
 - Cost implications of different patterns (polling is expensive at scale)
 - Streaming aggregates pattern (pipelines + webhooks pushing roll-ups)
 - Hybrid architectures for customers with existing data infrastructure
-- The Artemis-style "vendor at ingestion layer" approach
+- The "vendor at ingestion layer" approach
 
 ---
 
