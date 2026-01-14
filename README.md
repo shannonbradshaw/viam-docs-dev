@@ -18,10 +18,10 @@ This is the living navigation for the new Viam documentation structure. Click an
 
 ---
 
-## [Try](./try/INDEX.md) 🔴
+## [Try](./try/INDEX.md) 🟡
 *Zero-friction simulation experiences — full journey through all 5 stages*
 
-- [Stationary Vision Simulation](./try/stationary-vision.md) 🔴
+- [Stationary Vision Simulation](./try/stationary-vision.md) 🟡
 - [Mobile Base Simulation](./try/mobile-base.md) 🔴
 - [Arm + Vision Simulation](./try/arm-vision.md) 🔴
 
