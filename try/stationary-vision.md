@@ -238,13 +238,17 @@ Now you'll add machine learning to your camera. In Viam, ML capabilities are pro
 - **Components** are hardware: cameras, motors, arms
 - **Services** are capabilities: vision (ML inference), navigation (path planning), motion (arm kinematics)
 
-Services often *use* components. The vision service will use your camera to get images, then run ML inference on them.
+Services often *use* components. A **vision service** takes images from a camera, runs them through an ML model, and returns structured results—detections with bounding boxes and labels, or classifications with confidence scores. Your code calls the vision service API; the service handles everything else.
 
-> **ML Models in Viam:** Viam's vision service works with classification models, object detectors, and segmentation models. You can bring your own TensorFlow, ONNX, or PyTorch models, or use Viam's registry to deploy and version models across your fleet.
+To work with ML models, the vision service needs an **ML model service**. The ML model service loads a trained model (TensorFlow Lite, ONNX, or PyTorch) and exposes an `Infer()` method that takes input tensors and returns output tensors. The vision service handles the rest: converting camera images to the tensor format the model expects, calling the ML model service, and interpreting the raw tensor outputs into usable detections or classifications.
 
-**Add the ML model:**
+You'll configure both: first the ML model service (which loads the model), then the vision service (which connects the camera to the model).
 
-First, you need an ML model. Viam's registry includes pre-trained models you can deploy directly, plus any custom models you've trained.
+> **ML Models in Viam:** Viam's vision service works with classification models, object detectors, and segmentation models. You can use models from Viam's registry or upload your own.
+
+**Add the ML model service:**
+
+The ML model service loads a trained model and makes it available for inference.
 
 1. In the Viam app, click the **Configure** tab
 2. Click **+** next to your machine part in the left sidebar
@@ -265,22 +269,22 @@ First, you need an ML model. Viam's registry includes pre-trained models you can
 
 [SCREENSHOT: Select model dialog showing registry models]
 
-> **Your own models:** For production, you'd train a model on your specific parts and upload it to the registry. The registry handles versioning and deployment across your fleet.
+> **Your own models:** For a different application, you'd train a model on your specific data and upload it to the registry. The registry handles versioning and deployment across your fleet.
 
 **Add the vision service:**
 
-Now create a vision service that uses this model to analyze images.
+Now add a vision service that connects your camera to the ML model service. The vision service captures images, sends them through the model, and returns detections you can use in your code.
 
-1. Click **+ Add service** again
-2. For **Type**, select `vision`
-3. For **Model**, select `mlmodel`
+1. Click **+** next to your machine part
+2. Select **Service**, then **Vision**
+3. Search for `ML model` and select it
 4. Name it `part-detector`
 5. Click **Create**
 
-**Link the vision service to your model:**
+**Link the vision service to the camera and model:**
 
-1. In the `part-detector` configuration panel, find the **mlmodel_name** field
-2. Enter: `part-classifier` (the name of the ML model service you just created)
+1. In the `part-detector` configuration panel, find the **ML Model** dropdown
+2. Select `part-classifier` (the ML model service you just created)
 3. Click **Save config**
 
 [SCREENSHOT: Vision service configuration linked to ML model]
