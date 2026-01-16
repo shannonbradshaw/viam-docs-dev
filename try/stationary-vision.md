@@ -240,16 +240,16 @@ Now you'll add machine learning to your camera. In Viam, ML capabilities are pro
 
 Services often *use* components. A **vision service** takes images from a camera, runs them through an ML model, and returns structured results—detections with bounding boxes and labels, or classifications with confidence scores. Your code calls the vision service API; the service handles everything else.
 
-To work with ML models, the vision service needs an **ML model service**. The ML model service loads a trained model (TensorFlow Lite, ONNX, or PyTorch) and exposes an `Infer()` method that takes input tensors and returns output tensors. The vision service handles the rest: converting camera images to the tensor format the model expects, calling the ML model service, and interpreting the raw tensor outputs into usable detections or classifications.
+To work with ML models, the vision service needs an **ML model service**. The ML model service loads a trained model (TensorFlow, ONNX,or PyTorch) and exposes an `Infer()` method that takes input tensors and returns output tensors. The vision service handles the rest: converting camera images to the tensor format the model expects, calling the ML model service, and interpreting the raw tensor outputs into usable detections or classifications.
 
-You'll configure both: first the ML model service (which loads the model), then the vision service (which connects the camera to the model).
+When using computer vision, as in this tutorial, you need to configure both: first the ML model service (which loads the model), then the vision service (which connects the camera to the model).
 
 **Add the ML model service:**
 
 The ML model service loads a trained model and makes it available for inference.
 
 1. In the Viam app, click the **Configure** tab
-2. Click **+** next to your machine part in the left sidebar
+2. Click **+** next to your machine in the left sidebar
 3. Select **Service**, then **ML model**
 4. Search for `TFLite CPU` and select it
 5. Name it `part-classifier`
@@ -261,19 +261,19 @@ The ML model service loads a trained model and makes it available for inference.
 
 1. In the `part-classifier` configuration panel, click **Select model**
 2. Click the **Registry** tab
-3. Search for `part-quality-classifier` (a tutorial model that classifies parts as PASS or FAIL)
+3. Search for `part-quality-classifier` (a model we created for this tutorial that classifies parts as PASS or FAIL)
 4. Select it from the list
 5. Click **Save config**
 
 [SCREENSHOT: Select model dialog showing registry models]
 
-> **Your own models:** For a different application, you'd train a model on your specific data and upload it to the registry. The registry handles versioning and deployment across your fleet.
+> **Your own models:** For a different application, you'd train a model on your specific data and upload it to the registry. The registry handles versioning and deployment of ML models across your fleet.
 
 **Add the vision service:**
 
 Now add a vision service that connects your camera to the ML model service. The vision service captures images, sends them through the model, and returns detections you can use in your code.
 
-1. Click **+** next to your machine part
+1. Click **+** next to your machine
 2. Select **Service**, then **Vision**
 3. Search for `ML model` and select it
 4. Name it `part-detector`
@@ -281,9 +281,11 @@ Now add a vision service that connects your camera to the ML model service. The 
 
 **Link the vision service to the camera and model:**
 
-1. In the `part-detector` configuration panel, find the **ML Model** dropdown
-2. Select `part-classifier` (the ML model service you just created)
-3. Click **Save config**
+1. In the `part-detector` configuration panel, find the **Camera** dropdown
+2. Select `inspection-cam`
+3. Find the **ML Model** dropdown
+4. Select `part-classifier` (the ML model service you just created)
+5. Click **Save config**
 
 [SCREENSHOT: Vision service configuration linked to ML model]
 
@@ -292,7 +294,7 @@ Now add a vision service that connects your camera to the ML model service. The 
 1. You should still be on the **Configure** tab
 2. Find the `part-detector` service you just created
 3. Look for the **Test** section at the bottom of its configuration panel
-4. Select `inspection-cam` as the camera source
+4. If not already selected, select `inspection-cam` as the camera source
 5. Click **Get detections**
 
 You should see the camera image with detection results—bounding boxes around detected parts with labels (PASS or FAIL) and confidence scores.
