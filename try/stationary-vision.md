@@ -208,34 +208,27 @@ When you save, viam-server automatically reloads and applies the new configurati
 
 > **What just happened:** You declared "this machine has a camera called `inspection-cam`" by editing configuration in a web UI. Behind the scenes, viam-server loaded the appropriate driver, connected to the video device, and made the camera available through Viam's camera API. You'd do exactly the same thing for a motor, an arm, or any other component—just select a different type and model.
 
-#### 1.5 View the Camera Feed
+#### 1.5 Test the Camera
 
-Let's verify the camera is working by viewing its live feed.
+Let's verify the camera is working. Every component in Viam has a built-in test panel right in the configuration view.
 
-**Open the Control tab:**
+**Open the test panel:**
 
-1. Click the **Control** tab at the top of the machine page
-
-The Control tab shows interactive panels for each component. You should see your `inspection-cam` listed.
-
-[SCREENSHOT: Control tab showing inspection-cam component]
-
-**View the live stream:**
-
-1. Find the `inspection-cam` panel
-2. Click the **Toggle stream** button (or the expand icon)
+1. You should still be on the **Configure** tab with your `inspection-cam` selected
+2. Look for the **Test** section at the bottom of the camera's configuration panel
+3. Click **Toggle stream** to start the live feed
 
 You should see a live video feed from the simulated camera—an overhead view of the conveyor/staging area.
 
-[SCREENSHOT: Live camera feed showing the work cell]
+[SCREENSHOT: Camera test panel showing live feed in Configure tab]
 
-**Test the camera:**
+**Capture an image:**
 
 Click **Get image** to capture a single frame. The image appears in the panel and can be downloaded.
 
-> **What you're seeing:** This isn't a special debugging view. The Control tab uses the exact same APIs that your code will use. When you click "Get image," Viam calls the camera's `GetImage` method—the same method you'll call from Python or Go in a few minutes.
+> **What you're seeing:** This isn't a special debugging view. The test panel uses the exact same APIs that your code will use. When you click "Get image," Viam calls the camera's `GetImage` method—the same method you'll call from Python or Go in a few minutes.
 
-This pattern applies to all components. Motors have controls for setting velocity. Arms have controls for moving joints. The Control tab lets you interact with hardware before writing any code.
+This pattern applies to all components. Motors have test controls for setting velocity. Arms have controls for moving joints. You can test any component directly from its configuration panel.
 
 #### 1.6 Add a Vision Service
 
@@ -291,14 +284,15 @@ Now create a vision service that uses this model to analyze images.
 
 **Test the vision service:**
 
-1. Go to the **Control** tab
-2. Find the `part-detector` panel
-3. Select `inspection-cam` as the camera source
-4. Click **Get detections**
+1. You should still be on the **Configure** tab
+2. Find the `part-detector` service you just created
+3. Look for the **Test** section at the bottom of its configuration panel
+4. Select `inspection-cam` as the camera source
+5. Click **Get detections**
 
 You should see the camera image with detection results—bounding boxes around detected parts with labels (PASS or FAIL) and confidence scores.
 
-[SCREENSHOT: Vision service showing detection results with bounding boxes]
+[SCREENSHOT: Vision service test panel showing detection results with bounding boxes]
 
 > **What you've built:** A complete ML inference pipeline. The vision service grabs an image from the camera, runs it through the TensorFlow Lite model, and returns structured detection results. This same pattern works for any ML task—object detection, classification, segmentation—you just swap the model.
 
