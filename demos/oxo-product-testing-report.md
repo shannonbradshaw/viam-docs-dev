@@ -1,4 +1,4 @@
-# OXO Product Testing: Research Report
+# OXO Product Testing Intelligence & Demo Considerations
 
 **Purpose:** Analyze OXO's product testing operations, identify pain points, and propose Viam-based solutions with demo outlines.
 
@@ -8,7 +8,7 @@
 
 ### Company Profile
 
-OXO is a subsidiary of Helen of Troy Limited, acquired in June 2004 for $273 million in cash [1]. The company is headquartered in a 56,170-square-foot facility on two floors of the Starrett-Lehigh building, a classic art deco warehouse in the Chelsea neighborhood of Manhattan [2]. OXO introduces approximately 50 new products annually across multiple brands [1].
+OXO is a subsidiary of Helen of Troy Limited [1]. The company is headquartered in a 56,170-square-foot facility on two floors of the Starrett-Lehigh building, a classic art deco warehouse in the Chelsea neighborhood of Manhattan [2]. OXO introduces approximately 50 new products annually across multiple brands [1].
 
 ### Product Lines
 
