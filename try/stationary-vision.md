@@ -244,8 +244,6 @@ To work with ML models, the vision service needs an **ML model service**. The ML
 
 You'll configure both: first the ML model service (which loads the model), then the vision service (which connects the camera to the model).
 
-> **ML Models in Viam:** Viam's vision service works with classification models, object detectors, and segmentation models. You can use models from Viam's registry or upload your own.
-
 **Add the ML model service:**
 
 The ML model service loads a trained model and makes it available for inference.
@@ -307,9 +305,11 @@ You've now configured a working inspection system entirely through the Viam app�
 
 #### 1.7 Run an Inspection Session
 
-So far you've configured everything through the Viam app. Now you'll write code that connects to your machine remotely and runs a complete inspection session—the kind of tool you'd use when testing and tuning a real inspection system.
+So far you've configured everything through the Viam app. Now you'll write code that connects to your machine remotely and runs inspections—the same code that will eventually run in production.
 
-This code runs on your laptop (not on the machine). It connects to the machine over the network, runs inspections, and saves results locally where you can review them.
+During development, you run this code on your laptop. It connects to the machine over the network, uses the camera and vision service you configured, and lets you iterate quickly without deploying anything. When you're ready for production, you upload your module to the Viam registry and add it to your machine's configuration—just like you added the ML model from the registry earlier. The machine pulls the module and runs your service. No revisions required for production.
+
+This is the **module-first development pattern**: prototype your code in a package that will ultimately become your production logic, test it locally against remote hardware, then publish to the registry and configure your machines to use it.
 
 Viam provides SDKs for Python, Go, TypeScript, C++, and Flutter. We'll use Python and Go here—choose whichever you're more comfortable with.
 
