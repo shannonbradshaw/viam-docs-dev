@@ -4,6 +4,10 @@
 
 ---
 
+> **Note on Sources:** The most recent primary source on OXO's internal operations is the April 2024 Formlabs case study [7], which covers prototyping workflows. Detailed cycle testing documentation (equipment specs, test volumes, specific product examples) comes from OXO blog posts published 2016-2017 [3][4][6] and an intern portfolio from that era [5]. OXO has not published updated "behind the scenes" testing content since then. Current practices should be verified in direct conversation.
+
+---
+
 ## 1. OXO Products and Testing Overview
 
 ### Company Profile
@@ -69,6 +73,23 @@ Example: Straw Cup = 10 uses/day × 730 days (2 years) × 2 = 14,600 cycles (rou
 - **Industrial Designers**: Create ergonomic designs, request prototypes
 - **Test Engineer and Additive Manufacturing Lead** (Jesse Emanuel): Manages rapid prototyping lab receiving ~200 print requests/week [7]
 
+### Current State: Prototyping (April 2024)
+
+The most recent insight into OXO's operations comes from an April 2024 Formlabs case study [7]. Key points:
+
+> *"Needs are growing, but Form 4 has transformed our workflow. In the past, our queue has often been an issue based on time. With Form 4, it throws that out the window—we're no longer constrained by time."* — Jesse Emanuel
+
+> *"Our engineers are requesting parts from Form 4 because they say they're more dimensionally accurate."* — Jesse Emanuel
+
+**Materials used for testing prototypes:**
+- Tough 2000 Resin for ABS-like parts
+- Tough 1500 Resin for polypropylene (PP)
+- Silicone 40A Resin for true silicone validation models
+- High Temp Resin for prototypes tested in boiling water
+- Rigid 10K Resin for injection molds
+
+This confirms OXO continues to invest in rapid iteration and maintains high testing volumes, though specific cycle testing procedures have not been publicly updated since 2017.
+
 ---
 
 ## 2. Problems and Pain Points
@@ -89,7 +110,7 @@ On the effectiveness of human inspection, research consistently shows: *"100% vi
 
 ### B. OXO-Specific Pain Points
 
-Based on research, OXO likely experiences these specific challenges:
+Based on published documentation (primarily 2016-2017), OXO likely experiences these challenges. These patterns are common in product testing environments and align with the April 2024 Formlabs article's confirmation that throughput and queue management remain priorities:
 
 #### 1. **Failure Detection is Manual and Delayed**
 
@@ -402,18 +423,26 @@ From OXO's testing documentation [3]:
 
 ## References
 
-[1] Helen of Troy Limited. "Helen of Troy Limited Completes OXO International Acquisition." Press Release, June 2004. [investor.helenoftroy.com](https://investor.helenoftroy.com/press-releases/press-release-details/2004/Helen-of-Troy-Limited-Completes-OXO-International-Acquisition/default.aspx) — *Acquisition price ($273M), product count (~500 SKUs), 50 new products annually.*
+### 2024 Sources
 
-[2] Office Snapshots. "OXO International Offices – New York City." April 2022. [officesnapshots.com](https://officesnapshots.com/2022/04/18/oxo-international-offices-new-york-city/) — *Office size (56,170 sq ft), Starrett-Lehigh building location, space constraints in previous office.*
+[7] Formlabs. "How OXO Iterates Twice Before Lunch With Form 4." Formlabs Blog, **April 17, 2024**. [formlabs.com](https://formlabs.com/blog/oxo-3d-printing-formlabs-form-4/) — *Most recent source on OXO operations. Jesse Emanuel quotes, 200 print requests/week, material usage, workflow transformation.*
 
-[3] OXO. "Product Testing 101: How We Cycle Test Products." OXO Blog. [oxo.com](https://www.oxo.com/blog/behind-the-scenes/product-testing-101) — *Eddy Viana's role, cycle testing process, French Press tab example, fixture design workflow.*
+### 2022 Sources
 
-[4] OXO. "From NASA to Hotdog Fingers: Unconventional OXO Product Testing." OXO Blog. [oxo.com](https://www.oxo.com/blog/behind-the-scenes/nasa-hotdog-fingers-unconventional-oxo-product-testing) — *Environmental testing methods, hot dog finger testing, NASA-inspired testing for Tot products.*
+[2] Office Snapshots. "OXO International Offices – New York City." **April 2022**. [officesnapshots.com](https://officesnapshots.com/2022/04/18/oxo-international-offices-new-york-city/) — *Office size (56,170 sq ft), Starrett-Lehigh building location, space constraints in previous office.*
 
-[5] Eli Silver. "Cycle Tester." Portfolio. [elisilver.com](https://elisilver.com/Cycle-Tester) — *Detailed equipment specifications: aluminum extrusions, Arduino controller, pneumatic system, solenoid valves, webcam monitoring.*
+### 2016-2017 Sources (Cycle Testing Details)
 
-[6] OXO. "2017: Product Testing by the Numbers." OXO Blog. [oxo.com](https://www.oxo.com/blog/behind-the-scenes/2017-product-testing/) — *65 products tested in 2017, 15,000 cycles on Straw Cup, 10,000 cycles on Corer, 700+ avocados.*
+[3] OXO. "Product Testing 101: How We Cycle Test Products." OXO Blog, **~2016-2017**. [oxo.com](https://www.oxo.com/blog/behind-the-scenes/product-testing-101) — *Eddy Viana's role, cycle testing process, French Press tab example, fixture design workflow.*
 
-[7] Formlabs. "How OXO Iterates Faster with Formlabs." Formlabs Blog. [formlabs.com](https://formlabs.com/blog/oxo-3d-printing-formlabs-form-4/) — *Jesse Emanuel's role, 200 print requests/week, night print delays, equipment fleet.*
+[4] OXO. "From NASA to Hotdog Fingers: Unconventional OXO Product Testing." OXO Blog, **~2016-2017**. [oxo.com](https://www.oxo.com/blog/behind-the-scenes/nasa-hotdog-fingers-unconventional-oxo-product-testing) — *Environmental testing methods, hot dog finger testing, NASA-inspired testing for Tot products.*
+
+[5] Eli Silver. "Cycle Tester." Portfolio, **~2016-2018** (internship project). [elisilver.com](https://elisilver.com/Cycle-Tester) — *Detailed equipment specifications: aluminum extrusions, Arduino controller, pneumatic system, solenoid valves, webcam monitoring.*
+
+[6] OXO. "2017: Product Testing by the Numbers." OXO Blog, **2017**. [oxo.com](https://www.oxo.com/blog/behind-the-scenes/2017-product-testing/) — *65 products tested in 2017, 15,000 cycles on Straw Cup, 10,000 cycles on Corer, 700+ avocados.*
+
+### Background Sources
+
+[1] Helen of Troy Limited. "Helen of Troy Limited Completes OXO International Acquisition." Press Release, **June 2004**. [investor.helenoftroy.com](https://investor.helenoftroy.com/press-releases/press-release-details/2004/Helen-of-Troy-Limited-Completes-OXO-International-Acquisition/default.aspx) — *Product count (~500 SKUs), 50 new products annually.*
 
 [8] Pharmaceutical Technology. "Statistical Solutions: Visual Inspection Goes Viral." [pharmtech.com](https://www.pharmtech.com/view/statistical-solutions-visual-inspection-goes-viral); Elsmar Quality Forum discussions citing Dr. Juran's Handbook. — *100% human inspection is 80-85% effective, studies on inspector accuracy.*
