@@ -834,7 +834,7 @@ Inspection: FAIL (87.3% confidence)
 Would reject: true
 ```
 
-The `would_reject` flag doesn't do anything yet—there's no reject mechanism. You'll add that hardware and connect it later in Part 6.
+The `would_reject` flag doesn't do anything yet—there's no reject mechanism. You'll add that hardware and connect it in Part 3.
 
 ##### What you've built
 
@@ -858,11 +858,11 @@ Notice the pattern: your `NewInspector` function takes `resource.Dependencies` a
 
 **Skills:** Data capture configuration, cloud sync, filtered cameras, triggers and notifications.
 
+In Part 1, you set up the detection pipeline and wrote inspection logic using the module-first pattern. The `would_reject` flag is a placeholder—you'll connect it to real hardware in Part 3. First, let's get the rest of the system working: continuous data capture, cloud sync, and failure alerts. We're building a complete prototype quickly, then circling back to close the control loop.
+
+Data capture in Viam is configuration, not code. You enable capture on components and services, and Viam handles the rest—storing locally, syncing to the cloud, making it queryable. No scripts to deploy, no processes to manage.
+
 #### 2.1 Configure Data Capture
-
-In Part 1, you ran inspection sessions manually from your laptop. That's great for testing and debugging, but for production you want inspections running continuously—without anyone connected.
-
-Viam handles this through *data capture*: you configure which components and services should capture data, how often, and Viam does the rest. No scripts to deploy, no processes to manage.
 
 **Enable data capture on the vision service:**
 
@@ -870,77 +870,79 @@ Viam handles this through *data capture*: you configure which components and ser
 2. Find the `part-detector` vision service
 3. Click the **Data capture** section to expand it
 4. Toggle **Enable data capture** to on
-5. Set the capture frequency (e.g., every 2 seconds)
-6. Select the method to capture: `GetClassificationsFromCamera` or `GetDetectionsFromCamera`
+5. Set the capture frequency: `2` seconds
+6. Select the method to capture: `GetDetectionsFromCamera`
 7. Click **Save config**
 
 [SCREENSHOT: Vision service data capture configuration]
 
 **Also capture camera images:**
 
-For quality inspection, you often want the raw images alongside detection results—so you can review what the model saw.
+You want the raw images alongside detection results—so you can review what the model saw and use images to improve your model later.
 
 1. Find the `inspection-cam` camera in your config
 2. Expand **Data capture**
 3. Toggle **Enable data capture** to on
-4. Set frequency to match your vision service (e.g., every 2 seconds)
+4. Set frequency: `2` seconds (matching the vision service)
 5. Click **Save config**
 
 [SCREENSHOT: Camera data capture configuration]
 
-When you save, viam-server immediately starts capturing. Every 2 seconds, it runs detection on the camera and saves the results to local storage.
+**Verify it's working:**
 
-#### 2.2 Sync Data to the Cloud
+1. Go to the **Control** tab
+2. Find the `part-detector` vision service
+3. You should see a small indicator showing data is being captured
 
-Data captured on the machine is automatically synced to Viam's cloud. This happens in the background—you don't need to configure anything beyond enabling capture.
+The machine is now capturing detection results and images every 2 seconds—whether or not you're connected.
 
-**Watch the sync happen:**
+#### 2.2 View Data in the Cloud
 
-1. Go to the **Data** tab in your organization (not the machine)
-2. You should see data appearing within a minute or two
+Data captured on the machine automatically syncs to Viam's cloud. You don't need to configure sync separately—it happens in the background.
+
+**Check the data:**
+
+1. In the Viam app, click **Data** in the left sidebar (at the organization level, not the machine)
+2. Wait 1-2 minutes for initial sync
+3. You should see detection results and images appearing
 
 [SCREENSHOT: Data tab showing captured detections]
 
-The data includes:
-- **Detection results** — Every classification with label and confidence
-- **Camera images** — The raw frames, viewable inline
+**Verify the data includes:**
+
+- **Detection results** — Each row shows label (PASS/FAIL) and confidence score
+- **Camera images** — Click any row to see the image that was analyzed
 - **Timestamps** — When each capture occurred
-- **Machine ID** — Which machine captured it
+- **Machine ID** — Which machine captured it (matters when you have multiple stations)
 
-**Query the data:**
+**Filter and query:**
 
-You can filter and search captured data:
-
-1. Filter by machine: `inspection-station-1`
-2. Filter by time range: last hour, today, custom range
-3. Filter by component: `part-detector`
+1. Click **Filter** and select your machine: `inspection-station-1`
+2. Set time range to "Last hour"
+3. You can also filter by component to see only vision service results or only camera images
 
 [SCREENSHOT: Data tab with filters applied]
 
-> **What's happening:** The machine runs continuously, capturing inspection results and syncing them to the cloud. You don't need a laptop connected. You don't need a script running. The data flows automatically based on your configuration.
+This data serves multiple purposes:
+- **Compliance** — Auditable record of every inspection
+- **Quality trends** — "FAIL rate increased 20% this week"
+- **Model improvement** — Export images to retrain your ML model
+- **Incident review** — "Show me all FAILs from Tuesday's shift"
 
-#### 2.3 Alert on Failures
+#### 2.3 Add a Filtered Camera for Failures
 
-Capturing data is useful, but you need to know immediately when defects are detected. Viam's trigger system lets you send notifications when specific conditions occur—no custom code required.
+You're capturing every inspection, but you want to treat failures specially—capture higher-resolution images and trigger alerts. A *filtered camera* wraps your existing camera and vision service, only outputting when detections match your criteria.
 
-**Add a filtered camera:**
-
-A filtered camera wraps your existing camera and vision service, only outputting images when detections match your criteria. We'll configure one that captures only FAIL detections.
+**Create the filtered camera:**
 
 1. In the Viam app, go to **Config** tab
-2. Click **+ Add component**
+2. Click **+ Create component**
 3. For **Type**, select `camera`
 4. For **Model**, search for and select `filtered-camera`
 5. Name it `fail-detector-cam`
 6. Click **Create**
 
 **Configure the filter:**
-
-1. In the `fail-detector-cam` configuration panel, set:
-   - **camera**: `inspection-cam` (your source camera)
-   - **vision_service**: `part-detector` (your ML service)
-   - **classifications** or **objects**: Add `FAIL` as the label to match
-   - **confidence_threshold**: `0.7` (only capture high-confidence failures)
 
 ```json
 {
@@ -953,73 +955,432 @@ A filtered camera wraps your existing camera and vision service, only outputting
 }
 ```
 
-2. Click **Save config**
+This camera only outputs an image when `part-detector` detects FAIL with ≥70% confidence.
 
 [SCREENSHOT: Filtered camera configuration]
 
-**Enable data capture on the filtered camera:**
+**Enable data capture on it:**
 
-1. Expand **Data capture** on `fail-detector-cam`
+1. On `fail-detector-cam`, expand **Data capture**
 2. Toggle **Enable data capture** to on
-3. Set frequency (e.g., every 1 second)
+3. Set frequency: `1` second (check more frequently for failures)
 4. Click **Save config**
 
-Now only FAIL detections (with confidence ≥70%) are captured and synced.
+**Verify it works:**
 
-**Configure a trigger for notifications:**
+1. Go to the **Control** tab
+2. Find `fail-detector-cam`
+3. The stream shows nothing most of the time—it only shows an image when a FAIL is detected
+4. Wait for a failure (or trigger one in the simulation) and confirm you see the image
+
+Now you're capturing all inspections at 2-second intervals, plus high-frequency capture specifically when failures occur.
+
+#### 2.4 Configure Failure Alerts
+
+Capturing failure data is useful for analysis, but you need to know immediately when defects occur. Viam's trigger system sends notifications when specific events happen—no code required.
+
+**Add a trigger:**
 
 1. In the Viam app, go to **Config** tab
-2. Scroll to the **Triggers** section (or find it in the left sidebar)
+2. Scroll to the **Triggers** section
 3. Click **+ Add trigger**
 4. Configure:
    - **Name**: `fail-alert`
    - **Event type**: `Data has been synced to the cloud`
-   - **Data type**: Select the filtered camera's data
+   - **Data source**: Select `fail-detector-cam`
 
 **Add email notification:**
 
 1. Under **Notifications**, click **Add notification**
 2. Select **Email**
-3. Enter your email address (or select **Email all machine owners**)
-4. Set **Seconds between notifications**: `3600` (max one alert per hour)
+3. Enter your email address
+4. Set **Seconds between notifications**: `3600` (one alert per hour max—you don't want inbox spam)
 5. Click **Save config**
 
 [SCREENSHOT: Trigger configuration with email notification]
 
 **Test the alert:**
 
-Wait for a FAIL detection to occur (or trigger one in the simulation). Within a few minutes, you should receive an email notification.
+1. In the simulation, trigger a FAIL detection (place a defective part)
+2. Wait 1-2 minutes for the data to sync
+3. Check your email—you should receive a failure notification
 
-> **Going further:** You can also configure webhook notifications to integrate with Slack, PagerDuty, or any other service. The webhook receives the detection data, and your cloud function can format and route the alert however you need.
+[SCREENSHOT: Email notification received]
 
-#### 2.4 Understand the Pattern
+> **Going further:** You can configure webhook notifications to integrate with Slack, PagerDuty, or custom systems. The webhook receives the detection data as JSON, and your endpoint can format and route alerts however you need.
 
-Compare what you've done in Part 1 vs. Part 2:
+#### 2.5 Development vs. Production
 
-| Part 1: SDK Tool | Part 2: Data Capture |
-|------------------|---------------------|
-| Runs on your laptop | Runs on the machine |
-| You trigger it manually | Runs continuously, automatically |
-| Results saved locally (CSV, images) | Results synced to cloud |
-| Good for testing, debugging, one-off analysis | Good for production, ongoing monitoring |
+You now have two ways to run inspections:
 
-**Both are useful.** The SDK tool from Part 1 remains valuable:
-- Run it when testing a new ML model
-- Use it to debug when something seems wrong
-- Generate local reports for specific analysis
+| Development (Part 1) | Production (Part 2) |
+|---------------------|---------------------|
+| Your inspector code runs on your laptop | Data capture runs on the machine |
+| You trigger inspections manually | Inspections run continuously |
+| Results print to your terminal | Results sync to cloud |
+| Good for: testing, debugging, iterating on logic | Good for: ongoing monitoring, compliance, alerting |
 
-Data capture in Part 2 provides the production foundation:
-- Continuous operation without intervention
-- Cloud storage and sync
-- Data available for dashboards, alerting, analysis
+**Both remain valuable.** Your inspector code from Part 1 is still useful:
+- Test changes to inspection logic before deploying
+- Debug issues by running inspections manually
+- Add new features (like the reject mechanism in Part 3)
 
-> **The clean pattern:** The machine runs viam-server with configured components and services. Data capture handles automation. Triggers handle alerting. Your code runs remotely (laptop, server, cloud functions) and connects via SDK to query data or build applications. You don't deploy scripts to run on the machine—you configure the platform.
+Data capture provides the production foundation:
+- Runs 24/7 without intervention
+- Creates audit trail for compliance
+- Powers dashboards and alerting
+- Feeds data back for ML model improvement
 
-**Checkpoint:** Inspection data flows continuously from machine to cloud. You get notified when failures occur. No scripts deployed, no processes to manage—just configuration.
+> **The pattern:** The machine runs viam-server with configured components and services. Data capture handles continuous operation. Triggers handle alerting. Your module code (when deployed) handles control logic like rejection. You configure the platform; you don't deploy scripts.
+
+**Checkpoint:** Inspection data flows continuously from machine to cloud. You get alerts when failures occur. All through configuration—no code deployed to the machine yet.
 
 ---
 
-### Part 3: Scale (~10 min)
+### Part 3: Control (~10 min)
+
+**Goal:** Add a reject mechanism and connect it to your inspection logic.
+
+**Skills:** Adding actuators, updating module dependencies, closing the control loop.
+
+#### 3.1 Add the Reject Mechanism
+
+Your inspection system detects failures but doesn't act on them yet. The `would_reject` flag in your code is just a placeholder. Now you'll add hardware to actually reject defective parts.
+
+**Add the reject mechanism to your work cell:**
+
+Click the button below to add a part rejector to your simulation:
+
+[BUTTON: Add Reject Mechanism]
+
+The simulation now shows a pneumatic pusher mounted beside the conveyor. When activated, it pushes parts into a reject bin.
+
+[SCREENSHOT: Work cell with reject mechanism visible]
+
+**Configure it in Viam:**
+
+1. In the Viam app, go to your machine's **Config** tab
+2. Click **+ Create component**
+3. For **Type**, select `motor`
+4. For **Model**, select `gpio` (or the appropriate model for your simulation)
+5. Name it `rejector`
+6. Click **Create**
+
+**Configure the motor:**
+
+Set the board and pin that controls the rejector:
+
+```json
+{
+  "board": "local",
+  "pins": {
+    "pwm": "32"
+  }
+}
+```
+
+[SCREENSHOT: Rejector motor configuration]
+
+**Test it manually:**
+
+1. Go to the **Control** tab
+2. Find the `rejector` motor
+3. Click **Run** to activate it briefly
+4. Watch the simulation—the pusher should extend and retract
+
+[SCREENSHOT: Motor control panel with Run button]
+
+The hardware works. Now connect it to your inspection logic.
+
+#### 3.2 Update Your Code
+
+Add the rejector to your inspector so it can act on failures.
+
+{{< tabs >}}
+{{% tab name="Go" %}}
+
+**Update `inspector.go`:**
+
+First, add the motor to your imports and Config:
+
+```go
+import (
+	// ... existing imports ...
+	"go.viam.com/rdk/components/motor"
+)
+
+// Config declares which dependencies the inspector needs by name.
+type Config struct {
+	Camera        string
+	VisionService string
+	Rejector      string  // Add this
+}
+```
+
+Update `NewInspector` to extract the motor:
+
+```go
+func NewInspector(deps resource.Dependencies, cfg Config, logger logging.Logger) (*Inspector, error) {
+	cam, err := camera.FromDependencies(deps, cfg.Camera)
+	if err != nil {
+		return nil, err
+	}
+	detector, err := vision.FromDependencies(deps, cfg.VisionService)
+	if err != nil {
+		return nil, err
+	}
+	rejector, err := motor.FromDependencies(deps, cfg.Rejector)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Inspector{
+		cam:      cam,
+		detector: detector,
+		rejector: rejector,
+		camName:  cfg.Camera,
+		logger:   logger,
+	}, nil
+}
+```
+
+Add the rejector field to the struct:
+
+```go
+type Inspector struct {
+	cam      camera.Camera
+	detector vision.Service
+	rejector motor.Motor  // Add this
+	camName  string
+	logger   logging.Logger
+}
+```
+
+Add a `Reject` method:
+
+```go
+func (i *Inspector) Reject(ctx context.Context) error {
+	// Activate the rejector briefly to push the part
+	if err := i.rejector.GoFor(ctx, 100, 1, nil); err != nil {
+		return err
+	}
+	i.logger.Info("Part rejected")
+	return nil
+}
+```
+
+Update `Inspect` to call `Reject`:
+
+```go
+func (i *Inspector) Inspect(ctx context.Context) (*InspectionResult, error) {
+	detection, err := i.Detect(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	shouldReject := detection.Label == "FAIL" && detection.Confidence > 0.7
+
+	// Actually reject the part
+	if shouldReject {
+		if err := i.Reject(ctx); err != nil {
+			i.logger.Errorw("Failed to reject part", "error", err)
+		}
+	}
+
+	return &InspectionResult{
+		Label:      detection.Label,
+		Confidence: detection.Confidence,
+		Rejected:   shouldReject,  // Renamed from WouldReject
+	}, nil
+}
+```
+
+Update the result struct:
+
+```go
+type InspectionResult struct {
+	Label      string
+	Confidence float64
+	Rejected   bool  // Was WouldReject, now actually happens
+}
+```
+
+{{% /tab %}}
+{{% tab name="Python" %}}
+
+**Update `inspector.py`:**
+
+First, add the motor import and update Config:
+
+```python
+from viam.components.motor import Motor
+
+@dataclass
+class Config:
+    camera: str
+    vision_service: str
+    rejector: str  # Add this
+```
+
+Update the `new` method to extract the motor:
+
+```python
+@classmethod
+async def new(cls, deps: dict, cfg: Config) -> "Inspector":
+    cam = next((v for k, v in deps.items() if k.name == cfg.camera), None)
+    detector = next((v for k, v in deps.items() if k.name == cfg.vision_service), None)
+    rejector = next((v for k, v in deps.items() if k.name == cfg.rejector), None)
+    return cls(cam, detector, rejector, cfg.camera)
+```
+
+Update `__init__`:
+
+```python
+def __init__(self, cam: Camera, detector: VisionClient, rejector: Motor, cam_name: str):
+    self.cam = cam
+    self.detector = detector
+    self.rejector = rejector  # Add this
+    self.cam_name = cam_name
+```
+
+Add a `reject` method:
+
+```python
+async def reject(self) -> None:
+    """Activate the rejector to push the part off the line."""
+    await self.rejector.go_for(rpm=100, revolutions=1)
+    print("Part rejected")
+```
+
+Update `inspect` to call `reject`:
+
+```python
+async def inspect(self) -> InspectionResult:
+    detection = await self.detect()
+
+    should_reject = detection.label == "FAIL" and detection.confidence > 0.7
+
+    # Actually reject the part
+    if should_reject:
+        try:
+            await self.reject()
+        except Exception as e:
+            print(f"Failed to reject part: {e}")
+
+    return InspectionResult(
+        label=detection.label,
+        confidence=detection.confidence,
+        rejected=should_reject  # Renamed from would_reject
+    )
+```
+
+Update the result class:
+
+```python
+@dataclass
+class InspectionResult:
+    label: str
+    confidence: float
+    rejected: bool  # Was would_reject, now actually happens
+```
+
+{{% /tab %}}
+{{< /tabs >}}
+
+**Update `main.go` (or `cli.py`):**
+
+Add the rejector to your config:
+
+{{< tabs >}}
+{{% tab name="Go" %}}
+
+```go
+cfg := Config{
+    Camera:        "inspection-cam",
+    VisionService: "part-detector",
+    Rejector:      "rejector",  // Add this
+}
+```
+
+Update the output:
+
+```go
+fmt.Printf("Inspection: %s (%.1f%% confidence)\n", result.Label, result.Confidence*100)
+fmt.Printf("Rejected: %v\n", result.Rejected)
+```
+
+{{% /tab %}}
+{{% tab name="Python" %}}
+
+```python
+cfg = Config(
+    camera="inspection-cam",
+    vision_service="part-detector",
+    rejector="rejector"  # Add this
+)
+```
+
+Update the output:
+
+```python
+print(f"Inspection: {result.label} ({result.confidence*100:.1f}% confidence)")
+print(f"Rejected: {result.rejected}")
+```
+
+{{% /tab %}}
+{{< /tabs >}}
+
+#### 3.3 Test the Complete Loop
+
+Run your updated code:
+
+```bash
+go run . -host YOUR_HOST -api-key YOUR_KEY -api-key-id YOUR_KEY_ID
+```
+
+With a passing part:
+```
+Inspector ready
+Inspection: PASS (94.2% confidence)
+Rejected: false
+```
+
+With a failing part:
+```
+Inspector ready
+Inspection: FAIL (87.3% confidence)
+Part rejected
+Rejected: true
+```
+
+Watch the simulation—when a FAIL is detected, the rejector activates and pushes the part into the reject bin.
+
+[SCREENSHOT: Simulation showing part being rejected]
+
+**You've closed the control loop.** Your system now:
+1. **Sees** — Camera captures the part
+2. **Thinks** — Vision service classifies it
+3. **Acts** — Rejector removes defective parts
+
+This is the complete sense-think-act cycle that defines robotic systems.
+
+#### 3.4 The Pattern
+
+Look at how little changed to add an actuator:
+
+1. **Config** — Added one field: `Rejector string`
+2. **Constructor** — Added one extraction: `motor.FromDependencies`
+3. **Logic** — Added one method call: `i.Reject(ctx)`
+
+The module-first pattern made this easy. Your constructor already takes `Dependencies`—adding a new dependency is just one more extraction. The CLI already builds the Dependencies map—the motor is automatically included.
+
+When you deploy this as a module, the same code runs on the machine. The module system provides the Dependencies; your constructor extracts what it needs. Nothing changes.
+
+**Checkpoint:** Your inspection system takes action. Detect → Decide → Reject. The control loop is closed.
+
+---
+
+### Part 4: Scale (~10 min)
 
 **Goal:** Add a second inspection station.
 
@@ -1112,13 +1473,13 @@ Both stations are now running identical inspection logic.
 
 ---
 
-### Part 4: Fleet (~10 min)
+### Part 5: Fleet (~10 min)
 
 **Goal:** Manage both stations as a fleet.
 
 **Skills:** Fleet monitoring, pushing updates.
 
-#### 4.1 View Your Fleet
+#### 5.1 View Your Fleet
 
 With multiple machines running, you need a way to monitor them together—not clicking through each one individually.
 
@@ -1155,7 +1516,7 @@ You can query: "How many FAIL detections across all stations in the last hour?" 
 
 > **Two machines or two hundred:** This same view works regardless of fleet size. As you add machines, they appear here automatically. The fleet view is your single pane of glass for operations.
 
-#### 4.2 Push a Configuration Update
+#### 5.2 Push a Configuration Update
 
 One of the most powerful aspects of fragments is pushing updates. Let's change a setting and watch it propagate.
 
@@ -1195,13 +1556,13 @@ You didn't SSH into either machine. You didn't run any deployment commands. You 
 
 ---
 
-### Part 5: Maintain (~10 min)
+### Part 6: Maintain (~10 min)
 
 **Goal:** Debug and fix an issue.
 
 **Skills:** Remote diagnostics, log analysis, incident response.
 
-#### 5.1 Simulate a Problem
+#### 6.1 Simulate a Problem
 
 In production, things break. Cameras get dirty, cables loosen, lighting changes. Let's simulate a problem and practice debugging.
 
@@ -1225,7 +1586,7 @@ Within a few seconds, you should see signs of trouble:
 
 In a real deployment, this is how you'd first learn about a problem—through monitoring data and alerts, not a phone call from the factory floor.
 
-#### 5.2 Diagnose Remotely
+#### 6.2 Diagnose Remotely
 
 Now let's investigate without physical access to the machine.
 
@@ -1262,7 +1623,7 @@ This comparison confirms the problem is isolated to station 1, not a systemic is
 
 > **Remote diagnostics in practice:** You just debugged a hardware issue without physical access. In a real deployment, the machine could be in another building, another city, or another country. Viam gives you the same visibility regardless of location.
 
-#### 5.3 Fix and Verify
+#### 6.3 Fix and Verify
 
 Let's fix the issue and confirm the system recovers.
 
@@ -1297,13 +1658,13 @@ The data captured during the incident (the anomalous detections, the degraded im
 
 ---
 
-### Part 6: Productize (~15 min)
+### Part 7: Productize (~15 min)
 
 **Goal:** Build a customer-facing product.
 
 **Skills:** Building apps with Viam SDKs, white-label deployment.
 
-#### 6.1 Create a Customer Dashboard
+#### 7.1 Create a Customer Dashboard
 
 You've built a working system—but right now, only you can see it through the Viam app. Your customers need their own interface, with your branding, showing only what they need to see.
 
@@ -1413,7 +1774,7 @@ Open `dashboard.html` in your browser (or serve it with a local web server). You
 
 > **This is your product.** The dashboard has no Viam branding—it's your interface, powered by Viam's APIs. You can add your logo, customize the design, add features. The same APIs that power this simple page can power a full React application, a mobile app, or an enterprise dashboard.
 
-#### 6.2 Set Up White-Label Auth
+#### 7.2 Set Up White-Label Auth
 
 Your customers shouldn't log into Viam—they should log into *your* product. Viam supports white-label authentication so you can use your own identity provider.
 
@@ -1442,7 +1803,7 @@ You can also create customer accounts directly:
 
 This lets you ship a product where each customer sees only their own inspection stations.
 
-#### 6.3 (Optional) Configure Billing
+#### 7.3 (Optional) Configure Billing
 
 If you're selling inspection-as-a-service, you need to bill customers. Viam can meter usage and integrate with your billing system.
 
