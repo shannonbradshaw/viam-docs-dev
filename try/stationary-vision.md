@@ -315,9 +315,9 @@ This is the **module-first development pattern**: prototype your code in a packa
 
 Viam provides SDKs for Python, Go, TypeScript, C++, and Flutter. We'll use Python and Go here—choose whichever you're more comfortable with.
 
-##### Step 1: Scaffold a module project
+##### Set up your project
 
-Create a project structure that supports both local development and production deployment:
+Create a minimal project with two files: your service logic and a CLI to test it.
 
 {{< tabs >}}
 {{% tab name="Go" %}}
@@ -325,18 +325,16 @@ Create a project structure that supports both local development and production d
 ```bash
 mkdir inspection-module && cd inspection-module
 go mod init inspection-module
+go get go.viam.com/rdk
 ```
 
-Create this directory structure:
+Create two files:
 
 ```
 inspection-module/
-├── cmd/
-│   ├── module/main.go     # Production entry point (runs on machine)
-│   └── cli/main.go        # Development CLI (runs on your laptop)
-├── inspector.go           # Your service logic (used by both)
-├── go.mod
-└── meta.json              # Module metadata for registry
+├── inspector.go    # Your service logic
+├── main.go         # CLI for testing
+└── go.mod
 ```
 
 {{% /tab %}}
@@ -345,320 +343,85 @@ inspection-module/
 ```bash
 mkdir inspection-module && cd inspection-module
 python3 -m venv venv && source venv/bin/activate
-pip install viam-sdk
+pip install viam-sdk Pillow
 ```
 
-Create this directory structure:
+Create two files:
 
 ```
 inspection-module/
-├── src/
-│   ├── __init__.py
-│   ├── inspector.py       # Your service logic
-│   └── __main__.py        # Module entry point
-├── cli.py                 # Development CLI
-├── meta.json
-└── requirements.txt
+├── inspector.py    # Your service logic
+└── cli.py          # CLI for testing
 ```
 
 {{% /tab %}}
 {{< /tabs >}}
 
-The key insight: **your service logic lives in one place** (`inspector.go` or `inspector.py`) and is used by both the development CLI and the production module. You write the code once.
+The key insight: your service logic lives in one file and the CLI imports it. During development, you run the CLI on your laptop—it connects to the remote machine and uses the camera and vision service over the network. You iterate locally without deploying anything.
 
-##### Step 2: Write the service logic
+##### Write the CLI
 
-This is the code that runs inspections. It declares its dependencies (camera, vision service) in config and receives them through dependency injection:
-
-{{< tabs >}}
-{{% tab name="Go" %}}
-
-Create `inspector.go`:
-
-```go
-package inspector
-
-import (
-    "context"
-    "errors"
-
-    "go.viam.com/rdk/components/camera"
-    "go.viam.com/rdk/logging"
-    "go.viam.com/rdk/resource"
-    "go.viam.com/rdk/services/generic"
-    "go.viam.com/rdk/services/vision"
-)
-
-// Model identifies this service in the Viam registry
-var Model = resource.NewModel("your-org", "inspection", "inspector")
-
-// Config declares dependencies - these names match your machine config
-type Config struct {
-    Camera        string `json:"camera"`
-    VisionService string `json:"vision_service"`
-}
-
-// Validate ensures required fields are present
-func (c *Config) Validate(path string) ([]string, error) {
-    deps := []string{}
-    if c.Camera != "" {
-        deps = append(deps, c.Camera)
-    }
-    if c.VisionService != "" {
-        deps = append(deps, c.VisionService)
-    }
-    return deps, nil
-}
-
-// Inspector implements your inspection logic
-type Inspector struct {
-    resource.AlwaysRebuild
-    name     resource.Name
-    conf     *Config
-    cam      camera.Camera
-    detector vision.Service
-    logger   logging.Logger
-}
-
-// NewInspector creates the service - used by both CLI and module
-func NewInspector(
-    ctx context.Context,
-    deps resource.Dependencies,
-    name resource.Name,
-    conf *Config,
-    logger logging.Logger,
-) (*Inspector, error) {
-    // Get dependencies by name - these come from the machine
-    cam, err := camera.FromDependencies(deps, conf.Camera)
-    if err != nil {
-        return nil, err
-    }
-    detector, err := vision.FromDependencies(deps, conf.VisionService)
-    if err != nil {
-        return nil, err
-    }
-
-    return &Inspector{
-        name:     name,
-        conf:     conf,
-        cam:      cam,
-        detector: detector,
-        logger:   logger,
-    }, nil
-}
-
-// RunInspection captures an image and runs detection
-func (i *Inspector) RunInspection(ctx context.Context) (string, float64, error) {
-    detections, err := i.detector.DetectionsFromCamera(ctx, i.conf.Camera, nil)
-    if err != nil {
-        return "", 0, err
-    }
-
-    if len(detections) == 0 {
-        return "NO_DETECTION", 0.0, nil
-    }
-
-    // Find highest confidence detection
-    best := detections[0]
-    for _, d := range detections[1:] {
-        if d.Score() > best.Score() {
-            best = d
-        }
-    }
-
-    return best.Label(), best.Score(), nil
-}
-
-// DoCommand exposes inspection through the generic service API
-func (i *Inspector) DoCommand(
-    ctx context.Context,
-    cmd map[string]interface{},
-) (map[string]interface{}, error) {
-    if _, ok := cmd["inspect"]; ok {
-        result, confidence, err := i.RunInspection(ctx)
-        if err != nil {
-            return nil, err
-        }
-        return map[string]interface{}{
-            "result":     result,
-            "confidence": confidence,
-        }, nil
-    }
-    return nil, errors.New("unknown command: use {\"inspect\": true}")
-}
-
-// Required interface methods
-func (i *Inspector) Name() resource.Name { return i.name }
-func (i *Inspector) Close(ctx context.Context) error { return nil }
-```
-
-{{% /tab %}}
-{{% tab name="Python" %}}
-
-Create `src/inspector.py`:
-
-```python
-from typing import ClassVar, Mapping, Any, Optional
-from viam.module.types import Reconfigurable
-from viam.resource.types import Model, ModelFamily
-from viam.services.generic import Generic
-from viam.components.camera import Camera
-from viam.services.vision import VisionClient
-from viam.resource.base import ResourceBase
-from viam.proto.app.robot import ComponentConfig
-from viam.proto.common import ResourceName
-from viam.utils import struct_to_dict
-from viam.logging import getLogger
-
-LOGGER = getLogger(__name__)
-
-class Inspector(Generic, Reconfigurable):
-    """Inspection service - runs on both your laptop (dev) and machine (prod)."""
-
-    MODEL: ClassVar[Model] = Model(
-        ModelFamily("your-org", "inspection"), "inspector"
-    )
-
-    def __init__(self, name: str):
-        super().__init__(name)
-        self.camera: Optional[Camera] = None
-        self.detector: Optional[VisionClient] = None
-        self.camera_name: str = ""
-
-    @classmethod
-    def new(
-        cls,
-        config: ComponentConfig,
-        dependencies: Mapping[ResourceName, ResourceBase],
-    ) -> "Inspector":
-        """Create the service - used by both CLI and module."""
-        service = cls(config.name)
-        service.reconfigure(config, dependencies)
-        return service
-
-    def reconfigure(
-        self,
-        config: ComponentConfig,
-        dependencies: Mapping[ResourceName, ResourceBase],
-    ):
-        """Configure dependencies from the machine."""
-        attrs = struct_to_dict(config.attributes)
-
-        self.camera_name = attrs.get("camera", "")
-        vision_name = attrs.get("vision_service", "")
-
-        # Get dependencies by name - these come from the machine
-        for name, resource in dependencies.items():
-            if name.name == self.camera_name:
-                self.camera = resource
-            elif name.name == vision_name:
-                self.detector = resource
-
-    async def run_inspection(self) -> tuple[str, float]:
-        """Capture an image and run detection."""
-        if not self.detector or not self.camera_name:
-            raise ValueError("Inspector not configured")
-
-        detections = await self.detector.get_detections_from_camera(
-            self.camera_name
-        )
-
-        if not detections:
-            return "NO_DETECTION", 0.0
-
-        # Find highest confidence detection
-        best = max(detections, key=lambda d: d.confidence)
-        return best.class_name, best.confidence
-
-    async def do_command(
-        self, command: Mapping[str, Any], **kwargs
-    ) -> Mapping[str, Any]:
-        """Expose inspection through the generic service API."""
-        if "inspect" in command:
-            result, confidence = await self.run_inspection()
-            return {"result": result, "confidence": confidence}
-        raise ValueError("Unknown command: use {'inspect': True}")
-```
-
-{{% /tab %}}
-{{< /tabs >}}
-
-Notice what this code does **not** do: it doesn't connect to the machine or manage credentials. It receives its dependencies (camera, vision service) already connected. This is what makes the same code work in both development and production.
-
-##### Step 3: Write the development CLI
-
-This is where the module-first pattern shines. The CLI connects to your remote machine, gets the dependencies, and creates your service locally:
+Before writing service logic, create the CLI that connects to your machine and converts it to dependencies. This CLI stays the same across iterations—you only change what you call on the inspector.
 
 {{< tabs >}}
 {{% tab name="Go" %}}
 
-Create `cmd/cli/main.go`:
+Create `main.go`:
 
 ```go
 package main
 
 import (
-    "context"
-    "flag"
-    "fmt"
+	"context"
+	"flag"
+	"fmt"
 
-    "go.viam.com/rdk/logging"
-    "go.viam.com/rdk/services/generic"
-    vmodutils "go.viam.com/rdk/module/modmanager/vmodutils"
-
-    "inspection-module"  // Your service package
+	"go.viam.com/rdk/logging"
+	"go.viam.com/rdk/resource"
+	"go.viam.com/rdk/robot/client"
+	"go.viam.com/utils/rpc"
 )
 
 func main() {
-    host := flag.String("host", "", "Machine address (e.g., your-machine.viam.cloud)")
-    cameraName := flag.String("camera", "inspection-cam", "Camera name")
-    visionName := flag.String("vision", "part-detector", "Vision service name")
-    flag.Parse()
+	host := flag.String("host", "", "Machine address")
+	apiKey := flag.String("api-key", "", "API key")
+	apiKeyID := flag.String("api-key-id", "", "API key ID")
+	flag.Parse()
 
-    if *host == "" {
-        fmt.Println("Usage: inspector-cli -host YOUR_MACHINE_ADDRESS")
-        return
-    }
+	ctx := context.Background()
+	logger := logging.NewLogger("cli")
 
-    ctx := context.Background()
-    logger := logging.NewLogger("inspector-cli")
+	// 1. Connect to the remote machine
+	machine, err := client.New(ctx, *host, logger,
+		client.WithDialOptions(rpc.WithEntityCredentials(*apiKeyID,
+			rpc.Credentials{Type: rpc.CredentialsTypeAPIKey, Payload: *apiKey})))
+	if err != nil {
+		logger.Fatal(err)
+	}
+	defer machine.Close(ctx)
 
-    // 1. Connect to the REMOTE machine using CLI token auth
-    machine, err := vmodutils.ConnectToHostFromCLIToken(ctx, *host, logger)
-    if err != nil {
-        logger.Fatal(err)
-    }
-    defer machine.Close(ctx)
-    logger.Info("Connected to machine")
+	// 2. Convert machine resources to Dependencies
+	deps := make(resource.Dependencies)
+	for _, name := range machine.ResourceNames() {
+		r, err := machine.ResourceByName(name)
+		if err != nil {
+			continue
+		}
+		deps[name] = r
+	}
 
-    // 2. Get dependencies from the remote machine
-    deps, err := vmodutils.MachineToDependencies(machine)
-    if err != nil {
-        logger.Fatal(err)
-    }
+	// 3. Create inspector with Dependencies - same call the module would make
+	cfg := Config{
+		Camera:        "inspection-cam",
+		VisionService: "part-detector",
+	}
+	inspector, err := NewInspector(deps, cfg, logger)
+	if err != nil {
+		logger.Fatal(err)
+	}
 
-    // 3. Create YOUR service LOCALLY using remote dependencies
-    cfg := &inspector.Config{
-        Camera:        *cameraName,
-        VisionService: *visionName,
-    }
-    svc, err := inspector.NewInspector(
-        ctx, deps, generic.Named("inspector"), cfg, logger,
-    )
-    if err != nil {
-        logger.Fatal(err)
-    }
-    defer svc.Close(ctx)
-    logger.Info("Inspector service created")
-
-    // 4. Run inspection - your code runs locally, talks to remote hardware
-    result, err := svc.DoCommand(ctx, map[string]interface{}{"inspect": true})
-    if err != nil {
-        logger.Fatal(err)
-    }
-
-    fmt.Printf("Result: %s (%.1f%% confidence)\n",
-        result["result"], result["confidence"].(float64)*100)
+	// TODO: Call inspector methods here
+	fmt.Println("Inspector ready")
 }
 ```
 
@@ -671,60 +434,35 @@ Create `cli.py`:
 import asyncio
 import sys
 from viam.robot.client import RobotClient
-from viam.rpc.dial import DialOptions
-from viam.proto.app.robot import ComponentConfig
-from viam.proto.common import ResourceName
-from google.protobuf.struct_pb2 import Struct
 
-from src.inspector import Inspector
+from inspector import Inspector, Config
 
 async def main():
-    # Parse arguments
-    if len(sys.argv) < 2:
-        print("Usage: python cli.py MACHINE_ADDRESS [--camera NAME] [--vision NAME]")
+    host = sys.argv[1] if len(sys.argv) > 1 else ""
+    api_key = sys.argv[2] if len(sys.argv) > 2 else ""
+    api_key_id = sys.argv[3] if len(sys.argv) > 3 else ""
+
+    if not all([host, api_key, api_key_id]):
+        print("Usage: python cli.py HOST API_KEY API_KEY_ID")
         return
 
-    host = sys.argv[1]
-    camera_name = "inspection-cam"
-    vision_name = "part-detector"
-
-    # Parse optional args
-    args = sys.argv[2:]
-    for i, arg in enumerate(args):
-        if arg == "--camera" and i + 1 < len(args):
-            camera_name = args[i + 1]
-        elif arg == "--vision" and i + 1 < len(args):
-            vision_name = args[i + 1]
-
-    # 1. Connect to the REMOTE machine
-    # Use API key auth - get credentials from Viam app
+    # 1. Connect to the remote machine
     robot = await RobotClient.at_address(
         host,
-        RobotClient.Options.with_api_key(
-            api_key="YOUR_API_KEY",      # From Viam app
-            api_key_id="YOUR_API_KEY_ID"
-        )
+        RobotClient.Options.with_api_key(api_key=api_key, api_key_id=api_key_id)
     )
-    print(f"Connected to {host}")
 
-    # 2. Build dependencies dict from remote machine resources
+    # 2. Convert machine resources to dependencies dict
     deps = {}
-    for name in await robot.resource_names:
-        resource = await robot.get_component(name) if "component" in str(name) \
-            else await robot.get_service(name)
-        deps[name] = resource
+    for name in robot.resource_names:
+        deps[name] = robot.get_component(name)
 
-    # 3. Create YOUR service LOCALLY using remote dependencies
-    attrs = Struct()
-    attrs.update({"camera": camera_name, "vision_service": vision_name})
-    config = ComponentConfig(name="inspector", attributes=attrs)
+    # 3. Create inspector with dependencies - same call the module would make
+    cfg = Config(camera="inspection-cam", vision_service="part-detector")
+    inspector = await Inspector.new(deps, cfg)
 
-    svc = Inspector.new(config, deps)
-    print("Inspector service created")
-
-    # 4. Run inspection - your code runs locally, talks to remote hardware
-    result = await svc.do_command({"inspect": True})
-    print(f"Result: {result['result']} ({result['confidence']*100:.1f}% confidence)")
+    # TODO: Call inspector methods here
+    print("Inspector ready")
 
     await robot.close()
 
@@ -735,226 +473,382 @@ if __name__ == "__main__":
 {{% /tab %}}
 {{< /tabs >}}
 
-**The magic here**: Your service code runs on your laptop, but when it calls `detector.DetectionsFromCamera()`, that call goes over the network to the camera and vision service running on the remote machine. The image capture and ML inference happen on the machine; only results come back.
+The key is step 2→3: convert machine resources to a `Dependencies` map, then pass it to `NewInspector`. This is exactly what the module system does when running your code in production. The constructor signature is identical in both contexts.
 
-##### Step 4: Set up CLI authentication
+**Get your API credentials:**
 
-Before running the CLI, authenticate with Viam:
+1. In the Viam app, go to your machine's page
+2. Click the **Code sample** tab
+3. Toggle **Include API key** to see your credentials
+4. Copy the host address, API key, and API key ID
 
-{{< tabs >}}
-{{% tab name="Go" %}}
+[SCREENSHOT: Code sample tab showing API credentials]
 
-The Go CLI uses `vmodutils.ConnectToHostFromCLIToken()`, which reads credentials from the Viam CLI config. Run this once:
+Now you'll build the inspector through three iterations, testing each change against real hardware.
 
-```bash
-viam login
-```
+##### Iteration 1: Capture an image
 
-This stores your credentials in `~/.viam/`. The CLI will automatically use them.
-
-{{% /tab %}}
-{{% tab name="Python" %}}
-
-Get API credentials from the Viam app:
-
-1. Go to your organization's **Settings** page
-2. Click **API Keys** → **Create API Key**
-3. Copy the key and key ID into your `cli.py`
-
-{{% /tab %}}
-{{< /tabs >}}
-
-##### Step 5: Iterate on your logic
-
-Now you can rapidly develop and test:
+Start with the simplest operation—grab an image from the camera.
 
 {{< tabs >}}
 {{% tab name="Go" %}}
 
-```bash
-# Build the CLI
-go build -o inspector-cli ./cmd/cli
-
-# Run against your machine
-./inspector-cli -host your-machine.viam.cloud
-```
-
-{{% /tab %}}
-{{% tab name="Python" %}}
-
-```bash
-python cli.py your-machine.viam.cloud
-```
-
-{{% /tab %}}
-{{< /tabs >}}
-
-```
-Connected to machine
-Inspector service created
-Result: PASS (94.2% confidence)
-```
-
-Edit `inspector.go` (or `inspector.py`), rebuild, run again. No deployment, no waiting. Your code runs locally but uses real hardware.
-
-##### Step 6: Add the module entry point
-
-When your logic is working, add the production entry point:
-
-{{< tabs >}}
-{{% tab name="Go" %}}
-
-First, add registration code to `inspector.go`:
-
-```go
-func init() {
-    resource.RegisterService(generic.API, Model,
-        resource.Registration[resource.Service, *Config]{
-            Constructor: func(
-                ctx context.Context,
-                deps resource.Dependencies,
-                conf resource.Config,
-                logger logging.Logger,
-            ) (resource.Service, error) {
-                cfg, err := resource.NativeConfig[*Config](conf)
-                if err != nil {
-                    return nil, err
-                }
-                return NewInspector(ctx, deps, conf.ResourceName(), cfg, logger)
-            },
-        })
-}
-```
-
-Create `cmd/module/main.go`:
+Create `inspector.go`:
 
 ```go
 package main
 
 import (
-    "go.viam.com/rdk/module"
-    "go.viam.com/rdk/resource"
-    "go.viam.com/rdk/services/generic"
+	"context"
+	"image/jpeg"
+	"os"
 
-    "inspection-module"  // Imports trigger init() registration
+	"go.viam.com/rdk/components/camera"
+	"go.viam.com/rdk/logging"
+	"go.viam.com/rdk/resource"
+	"go.viam.com/rdk/services/vision"
 )
 
-func main() {
-    module.ModularMain(
-        resource.APIModel{API: generic.API, Model: inspector.Model},
-    )
+// Config declares which dependencies the inspector needs by name.
+type Config struct {
+	Camera        string
+	VisionService string
 }
+
+// Inspector is your service. It holds references to its dependencies.
+type Inspector struct {
+	cam      camera.Camera
+	detector vision.Service
+	camName  string
+	logger   logging.Logger
+}
+
+// NewInspector creates an inspector by extracting dependencies from the map.
+// This signature is what the module system calls in production.
+func NewInspector(deps resource.Dependencies, cfg Config, logger logging.Logger) (*Inspector, error) {
+	cam, err := camera.FromDependencies(deps, cfg.Camera)
+	if err != nil {
+		return nil, err
+	}
+	detector, err := vision.FromDependencies(deps, cfg.VisionService)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Inspector{
+		cam:      cam,
+		detector: detector,
+		camName:  cfg.Camera,
+		logger:   logger,
+	}, nil
+}
+
+func (i *Inspector) CaptureImage(ctx context.Context) error {
+	img, _, err := i.cam.Image(ctx, "", nil)
+	if err != nil {
+		return err
+	}
+
+	f, err := os.Create("snapshot.jpg")
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	return jpeg.Encode(f, img, nil)
+}
+```
+
+Update `main.go` to call it:
+
+```go
+// Replace the TODO line with:
+if err := inspector.CaptureImage(ctx); err != nil {
+    logger.Fatal(err)
+}
+fmt.Println("Saved snapshot.jpg")
 ```
 
 {{% /tab %}}
 {{% tab name="Python" %}}
 
-Create `src/__main__.py`:
+Create `inspector.py`:
 
 ```python
-import asyncio
-from viam.module.module import Module
-from viam.services.generic import Generic
+from dataclasses import dataclass
+from viam.components.camera import Camera
+from viam.services.vision import VisionClient
 
-from .inspector import Inspector
+@dataclass
+class Config:
+    camera: str
+    vision_service: str
 
-async def main():
-    module = Module.from_args()
-    module.add_model_from_registry(Generic.SUBTYPE, Inspector.MODEL)
-    await module.start()
+class Inspector:
+    def __init__(self, cam: Camera, detector: VisionClient, cam_name: str):
+        self.cam = cam
+        self.detector = detector
+        self.cam_name = cam_name
 
-if __name__ == "__main__":
-    asyncio.run(main())
+    @classmethod
+    async def new(cls, deps: dict, cfg: Config) -> "Inspector":
+        """Create an inspector by extracting dependencies from the map.
+        This signature is what the module system calls in production."""
+        cam = deps.get(cfg.camera) or next(
+            (v for k, v in deps.items() if k.name == cfg.camera), None
+        )
+        detector = deps.get(cfg.vision_service) or next(
+            (v for k, v in deps.items() if k.name == cfg.vision_service), None
+        )
+        return cls(cam, detector, cfg.camera)
+
+    async def capture_image(self) -> None:
+        img = await self.cam.get_image()
+        img.save("snapshot.jpg")
+```
+
+Update `cli.py` to call it:
+
+```python
+# Replace the TODO line with:
+await inspector.capture_image()
+print("Saved snapshot.jpg")
 ```
 
 {{% /tab %}}
 {{< /tabs >}}
 
-##### Step 7: Deploy to the registry
+**Test it:**
 
-Create `meta.json`:
-
-```json
-{
-  "module_id": "your-org:inspection-module",
-  "visibility": "private",
-  "url": "",
-  "description": "Part inspection service",
-  "models": [
-    {
-      "api": "rdk:service:generic",
-      "model": "your-org:inspection:inspector"
-    }
-  ],
-  "entrypoint": "run.sh"
-}
+```bash
+go run . -host YOUR_HOST -api-key YOUR_KEY -api-key-id YOUR_KEY_ID
+# or: python cli.py YOUR_HOST YOUR_KEY YOUR_KEY_ID
 ```
 
-Build and upload:
+```
+Inspector ready
+Saved snapshot.jpg
+```
+
+Open `snapshot.jpg`—you should see the current view from your inspection camera. This image was captured on the remote machine and transferred to your laptop.
+
+##### Iteration 2: Run detection
+
+Add a method to run the ML model and get classification results.
 
 {{< tabs >}}
 {{% tab name="Go" %}}
 
-```bash
-# Build the module binary
-go build -o inspector ./cmd/module
+Add to `inspector.go`:
 
-# Create the tarball
-tar -czvf module.tar.gz inspector meta.json
+```go
+type DetectionResult struct {
+	Label      string
+	Confidence float64
+}
 
-# Upload to registry
-viam module upload --version 1.0.0 --platform linux/amd64 module.tar.gz
+func (i *Inspector) Detect(ctx context.Context) (*DetectionResult, error) {
+	detections, err := i.detector.DetectionsFromCamera(ctx, i.camName, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(detections) == 0 {
+		return &DetectionResult{Label: "NO_DETECTION", Confidence: 0}, nil
+	}
+
+	// Find highest confidence detection
+	best := detections[0]
+	for _, d := range detections[1:] {
+		if d.Score() > best.Score() {
+			best = d
+		}
+	}
+
+	return &DetectionResult{Label: best.Label(), Confidence: best.Score()}, nil
+}
+```
+
+Update `main.go`:
+
+```go
+// Replace previous call with:
+result, err := inspector.Detect(ctx)
+if err != nil {
+    logger.Fatal(err)
+}
+fmt.Printf("Detection: %s (%.1f%% confidence)\n", result.Label, result.Confidence*100)
 ```
 
 {{% /tab %}}
 {{% tab name="Python" %}}
 
-```bash
-# Create run script
-echo '#!/bin/bash
-exec python3 -m src "$@"' > run.sh
-chmod +x run.sh
+Add to `inspector.py`:
 
-# Create tarball
-tar -czvf module.tar.gz src run.sh meta.json requirements.txt
+```python
+from dataclasses import dataclass
 
-# Upload
-viam module upload --version 1.0.0 --platform linux/amd64 module.tar.gz
+@dataclass
+class DetectionResult:
+    label: str
+    confidence: float
+
+class Inspector:
+    # ... existing __init__ and capture_image ...
+
+    async def detect(self) -> DetectionResult:
+        detections = await self.detector.get_detections_from_camera(self.cam_name)
+
+        if not detections:
+            return DetectionResult(label="NO_DETECTION", confidence=0.0)
+
+        best = max(detections, key=lambda d: d.confidence)
+        return DetectionResult(label=best.class_name, confidence=best.confidence)
+```
+
+Update `cli.py`:
+
+```python
+# Replace previous call with:
+result = await inspector.detect()
+print(f"Detection: {result.label} ({result.confidence*100:.1f}% confidence)")
 ```
 
 {{% /tab %}}
 {{< /tabs >}}
 
-##### Step 8: Add the module to your machine
+**Test it:**
 
-In the Viam app:
+```bash
+go run . -host YOUR_HOST -api-key YOUR_KEY -api-key-id YOUR_KEY_ID
+```
 
-1. Go to your machine's **Config** tab
-2. Click **+ Create service** → **generic**
-3. Select your module from the registry
-4. Configure it with your camera and vision service names:
+```
+Inspector ready
+Detection: PASS (94.2% confidence)
+```
 
-```json
-{
-  "camera": "inspection-cam",
-  "vision_service": "part-detector"
+You're now running ML inference on the remote machine from your laptop. The image capture and model execution happen on the machine; only the results come back.
+
+##### Iteration 3: Add inspection logic with reject placeholder
+
+Add the complete inspection method that determines whether to reject a part. For now, `would_reject` is just a flag—you'll connect it to an actual reject mechanism later.
+
+{{< tabs >}}
+{{% tab name="Go" %}}
+
+Add to `inspector.go`:
+
+```go
+type InspectionResult struct {
+	Label       string
+	Confidence  float64
+	WouldReject bool
+}
+
+func (i *Inspector) Inspect(ctx context.Context) (*InspectionResult, error) {
+	detection, err := i.Detect(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Reject if FAIL detected with sufficient confidence
+	wouldReject := detection.Label == "FAIL" && detection.Confidence > 0.7
+
+	return &InspectionResult{
+		Label:       detection.Label,
+		Confidence:  detection.Confidence,
+		WouldReject: wouldReject,
+	}, nil
 }
 ```
 
-5. Save the config
+Update `main.go`:
 
-The machine pulls your module and runs it. The exact same `inspector.go` or `inspector.py` code that worked on your laptop now runs on the machine itself.
+```go
+// Replace previous call with:
+result, err := inspector.Inspect(ctx)
+if err != nil {
+    logger.Fatal(err)
+}
+fmt.Printf("Inspection: %s (%.1f%% confidence)\n", result.Label, result.Confidence*100)
+fmt.Printf("Would reject: %v\n", result.WouldReject)
+```
+
+{{% /tab %}}
+{{% tab name="Python" %}}
+
+Add to `inspector.py`:
+
+```python
+@dataclass
+class InspectionResult:
+    label: str
+    confidence: float
+    would_reject: bool
+
+class Inspector:
+    # ... existing methods ...
+
+    async def inspect(self) -> InspectionResult:
+        detection = await self.detect()
+
+        # Reject if FAIL detected with sufficient confidence
+        would_reject = detection.label == "FAIL" and detection.confidence > 0.7
+
+        return InspectionResult(
+            label=detection.label,
+            confidence=detection.confidence,
+            would_reject=would_reject
+        )
+```
+
+Update `cli.py`:
+
+```python
+# Replace previous call with:
+result = await inspector.inspect()
+print(f"Inspection: {result.label} ({result.confidence*100:.1f}% confidence)")
+print(f"Would reject: {result.would_reject}")
+```
+
+{{% /tab %}}
+{{< /tabs >}}
+
+**Test it:**
+
+```bash
+go run . -host YOUR_HOST -api-key YOUR_KEY -api-key-id YOUR_KEY_ID
+```
+
+```
+Inspector ready
+Inspection: PASS (94.2% confidence)
+Would reject: false
+```
+
+Or if a defect is detected:
+
+```
+Inspection: FAIL (87.3% confidence)
+Would reject: true
+```
+
+The `would_reject` flag doesn't do anything yet—there's no reject mechanism. You'll add that hardware and connect it later in Part 6.
 
 ##### What you've built
 
-- **Same code, two entry points**: `inspector.go` is used by both the CLI (development) and the module (production)
-- **Remote dependencies, local execution**: During development, your code runs locally but uses remote hardware over the network
-- **Fast iteration**: Edit, rebuild CLI, test—no deployment needed until you're ready
-- **Zero changes for production**: Package and upload; the machine runs your code unmodified
+In three iterations, you went from nothing to a working inspection system:
 
-> **This is module-first development.** You prototype against real hardware without deploying, then ship the exact same logic as a production module. The pattern works for any Viam service—inspection, navigation, custom sensors, integrations with external systems.
+1. **Capture image** — Proved you can access remote hardware
+2. **Run detection** — Added ML inference
+3. **Inspection logic** — Made a decision (reject or not)
 
-**Checkpoint:** You've built a modular inspection service, tested it locally against remote hardware, and deployed it to the registry. This is the development workflow for production Viam applications.
+Each iteration was: edit → rebuild → run → see results. No deployment, no waiting. Your code ran on your laptop while the hardware ran on the machine.
+
+Notice the pattern: your `NewInspector` function takes `resource.Dependencies` and extracts what it needs by name. The CLI builds that Dependencies map from the remote machine; in production, the module system provides it. **Same constructor, same code, different context.** That's module-first development.
+
+**Checkpoint:** You can write code that talks to your machine. The inspection logic is ready—it just needs hardware to act on its decisions.
 
 ---
 
