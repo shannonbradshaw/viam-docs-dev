@@ -1449,30 +1449,45 @@ class Inspector(Generic):
       "model": "your-org:inspection:inspector"
     }
   ],
-  "entrypoint": "run.sh"
+  "entrypoint": "bin/inspection-module"
 }
+```
+
+**Build and package the module:**
+
+```bash
+# Build the binary
+mkdir -p bin
+go build -o bin/inspection-module cmd/module/main.go
+
+# Create the upload tarball
+tar czf module.tar.gz meta.json bin/
 ```
 
 **Upload to the registry:**
 
 ```bash
-viam module upload --version 1.0.0 --platform linux/amd64
+viam module upload --version 1.0.0 --platform linux/amd64 module.tar.gz
 ```
+
+> **Note:** Replace `your-org` in meta.json with your actual Viam organization namespace. You can find this in the Viam app under **Organization settings**.
 
 **Add the module to your machine:**
 
 1. In the Viam app, go to your machine's **Configure** tab
 2. Click **+** next to your machine
-3. Select **Service**, then **Local module**, then **Local module**
-4. Enter the module name from the registry
-5. Click **Create**
+3. Select **Service** and search for `inspection-module`
+4. Select your module from the results (it will show as `your-org:inspection-module`)
+5. Click **Add module**
+
+This adds both the module and creates a service configuration card.
 
 **Configure the inspector service:**
 
-1. Click **+** next to your machine again
-2. Select **Service**, then your module's model
-3. Name it `inspector`
-4. Configure its dependencies:
+In the service card that was created:
+
+1. Name it `inspector`
+2. Expand the **Attributes** section and add the dependencies:
 
 ```json
 {
@@ -1482,7 +1497,13 @@ viam module upload --version 1.0.0 --platform linux/amd64
 }
 ```
 
-5. Click **Save config**
+3. Click **Save** in the top right
+
+**Verify it's running:**
+
+1. Check the **Logs** tab for your machine
+2. You should see the inspector module starting up
+3. Go to the simulation and trigger a defective part—watch the rejector activate
 
 The machine now runs your inspection logic autonomously. The same code that ran on your laptop now runs on the machine as part of viam-server.
 
@@ -1522,36 +1543,86 @@ You have one working inspection station. Now imagine you need 10 more—or 100. 
 
 Viam solves this with *fragments*: reusable configuration blocks that can be applied to any machine. Think of a fragment as a template. Define your camera, vision service, data capture, and triggers once, then apply that template to as many machines as you need.
 
-**Create a fragment from your configuration:**
+**Export your machine configuration:**
+
+1. Go to your `inspection-station-1` machine
+2. Click the **Configure** tab, then click **JSON** (top right) to see the raw configuration
+3. Copy the entire JSON configuration to your clipboard
+
+[SCREENSHOT: JSON config view with copy button]
+
+**Create the fragment:**
 
 1. In the Viam app, click **Fragments** in the left sidebar
 2. Click **+ Create fragment**
 3. Name it `inspection-station`
-4. Click **Create**
-
-[SCREENSHOT: Create fragment dialog]
-
-**Add your configuration to the fragment:**
-
-Now you'll copy the configuration from your machine into the fragment.
-
-1. Go back to your `inspection-station-1` machine
-2. Click the **Config** tab, then click the **JSON** toggle (top right) to see the raw configuration
-3. Copy the entire JSON configuration
-
-[SCREENSHOT: JSON config view with copy button]
-
-4. Return to your fragment
-5. Paste the configuration into the fragment editor
-6. Click **Save**
+4. Paste your configuration into the fragment editor
+5. Click **Save**
 
 [SCREENSHOT: Fragment editor with pasted configuration]
 
-Your fragment now contains everything: the camera, ML model service, vision service, inspector module, data capture settings, and trigger configuration. Any machine with this fragment applied will have this exact setup.
+#### 4.2 Parameterize Machine-Specific Values
 
-> **Fragments are powerful.** When you update a fragment, every machine using it receives the update automatically. Change a detection threshold once, and 100 stations update. This is how you manage configuration at scale.
+Your fragment now contains everything—but some values are specific to each machine. The camera's `video_path` might be `/dev/video0` on one machine and `/dev/video1` on another. Hardcoding these values would break the fragment's reusability.
 
-#### 4.2 Add a Second Machine
+Viam fragments support *variables* for exactly this purpose.
+
+**Find the camera configuration in your fragment:**
+
+Look for the camera component in the JSON. It will look something like:
+
+```json
+{
+  "name": "inspection-cam",
+  "type": "camera",
+  "model": "webcam",
+  "attributes": {
+    "video_path": "/dev/video0"
+  }
+}
+```
+
+**Replace the hardcoded value with a variable:**
+
+Change `video_path` to use the `$variable` syntax:
+
+```json
+{
+  "name": "inspection-cam",
+  "type": "camera",
+  "model": "webcam",
+  "attributes": {
+    "video_path": {
+      "$variable": {
+        "name": "camera_path"
+      }
+    }
+  }
+}
+```
+
+Click **Save** to update the fragment.
+
+Now when you apply this fragment to a machine, you'll provide the actual `camera_path` value for that specific machine.
+
+> **What to parameterize:** Device paths (`/dev/video0`, `/dev/ttyUSB0`), IP addresses, serial numbers—anything that varies between physical machines. Configuration like detection thresholds, capture frequency, and module versions should stay in the fragment so they're consistent across your fleet.
+
+**Apply the fragment to your first machine:**
+
+Now that the fragment exists, update `inspection-station-1` to use it instead of inline configuration:
+
+1. Go to `inspection-station-1`'s **Configure** tab
+2. Switch to **JSON** view
+3. Delete all the component and service configurations (keep only the machine metadata)
+4. Switch back to **Builder** view
+5. Click **+** and select **Insert fragment**
+6. Select `inspection-station` and click **Add**
+7. Set the variable: `{"camera_path": "/dev/video0"}`
+8. Click **Save**
+
+The machine reloads with the same configuration, but now it's sourced from the fragment. Any future changes to the fragment will automatically apply to this machine.
+
+#### 4.3 Add a Second Machine
 
 Let's spin up a second inspection station and apply the fragment.
 
@@ -1575,19 +1646,30 @@ Follow the same steps from Part 1:
 4. Paste and run it in the second simulation's terminal
 5. Wait for the machine to come online
 
-**Apply the fragment:**
+**Apply the fragment with variable values:**
 
-Instead of manually configuring everything, you'll apply your fragment.
-
-1. On `inspection-station-2`, go to the **Config** tab
-2. Click **+ Add fragment**
-3. Select `inspection-station` from the dropdown
+1. On `inspection-station-2`, go to the **Configure** tab
+2. Click **+** and select **Insert fragment**
+3. Search for and select `inspection-station`
 4. Click **Add**
-5. Click **Save config**
 
-[SCREENSHOT: Adding fragment to machine]
+The fragment appears in your configuration. Notice the **Variables** section—this is where you provide machine-specific values.
 
-Within seconds, the machine reloads its configuration. It now has the camera, vision service, data capture, and alerting—all from the fragment.
+**Set the camera path for this machine:**
+
+1. In the fragment's **Variables** section, add:
+
+```json
+{
+  "camera_path": "/dev/video0"
+}
+```
+
+2. Click **Save** in the top right
+
+[SCREENSHOT: Fragment with variables configured]
+
+Within seconds, the machine reloads its configuration. It now has the camera (with the correct device path), vision service, inspector module, data capture, and alerting—all from the fragment, customized for this specific machine.
 
 **Verify it works:**
 
@@ -1599,7 +1681,7 @@ Both stations are now running identical inspection logic.
 
 [SCREENSHOT: Fleet view showing both machines online]
 
-**Checkpoint:** Two stations running identical inspection logic. You didn't copy-paste configuration—you used a fragment.
+**Checkpoint:** Two stations running identical inspection logic from a shared fragment. Device-specific values (camera path) are parameterized with variables. Update the fragment once, and both machines receive the change.
 
 ---
 
