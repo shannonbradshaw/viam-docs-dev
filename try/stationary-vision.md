@@ -74,6 +74,69 @@ A working inspection system with:
 
 ---
 
+## Tutorial Outline
+
+| Part | Time | What You'll Do |
+|------|------|----------------|
+| [Part 1: Vision Pipeline](#part-1-vision-pipeline-25-min) | ~25 min | Set up camera, ML model, and vision service |
+| [Part 2: Data Capture](#part-2-data-capture-15-min) | ~15 min | Configure automatic data sync and alerts |
+| [Part 3: Control Logic](#part-3-control-logic-30-min) | ~30 min | Write inspection module, deploy to machine |
+| [Part 4: Scale](#part-4-scale-10-min) | ~10 min | Create fragment, add second machine |
+| [Part 5: Fleet](#part-5-fleet-10-min) | ~10 min | Monitor fleet, push configuration updates |
+| [Part 6: Maintain](#part-6-maintain-10-min) | ~10 min | Debug and fix issues remotely |
+| [Part 7: Productize](#part-7-productize-15-min) | ~15 min | Build dashboard, white-label auth |
+
+<details>
+<summary><strong>Full Section Outline</strong></summary>
+
+**[Part 1: Vision Pipeline](#part-1-vision-pipeline-25-min)** (~25 min)
+- [1.1 Launch the Simulation](#11-launch-the-simulation)
+- [1.2 Create a Machine in Viam](#12-create-a-machine-in-viam)
+- [1.3 Install viam-server](#13-install-viam-server)
+- [1.4 Configure the Camera](#14-configure-the-camera)
+- [1.5 Test the Camera](#15-test-the-camera)
+- [1.6 Add a Vision Service](#16-add-a-vision-service)
+
+**[Part 2: Data Capture](#part-2-data-capture-15-min)** (~15 min)
+- [2.1 Configure Data Capture](#21-configure-data-capture)
+- [2.2 Add Machine Health Alert](#22-add-machine-health-alert)
+- [2.3 View and Query Data](#23-view-and-query-data)
+- [2.4 Summary](#24-summary)
+
+**[Part 3: Control Logic](#part-3-control-logic-30-min)** (~30 min)
+- [3.1 Set Up Your Project](#31-set-up-your-project)
+- [3.2 Build the Inspector](#32-build-the-inspector)
+- [3.3 Write the Development CLI](#33-write-the-development-cli)
+- [3.4 Test Your First Command](#34-test-your-first-command)
+- [3.5 Configure the Rejector](#35-configure-the-rejector)
+- [3.6 Add Rejection Logic](#36-add-rejection-logic)
+- [3.7 Test the Complete Loop](#37-test-the-complete-loop)
+- [3.8 Deploy as a Module](#38-deploy-as-a-module)
+- [3.9 Summary](#39-summary)
+
+**[Part 4: Scale](#part-4-scale-10-min)** (~10 min)
+- [4.1 Create a Fragment](#41-create-a-fragment)
+- [4.2 Parameterize Machine-Specific Values](#42-parameterize-machine-specific-values)
+- [4.3 Add a Second Machine](#43-add-a-second-machine)
+
+**[Part 5: Fleet](#part-5-fleet-10-min)** (~10 min)
+- [5.1 View Your Fleet](#51-view-your-fleet)
+- [5.2 Push a Configuration Update](#52-push-a-configuration-update)
+
+**[Part 6: Maintain](#part-6-maintain-10-min)** (~10 min)
+- [6.1 Simulate a Problem](#61-simulate-a-problem)
+- [6.2 Diagnose Remotely](#62-diagnose-remotely)
+- [6.3 Fix and Verify](#63-fix-and-verify)
+
+**[Part 7: Productize](#part-7-productize-15-min)** (~15 min)
+- [7.1 Create a Dashboard](#71-create-a-dashboard)
+- [7.2 Set Up White-Label Auth](#72-set-up-white-label-auth)
+- [7.3 (Optional) Configure Billing](#73-optional-configure-billing)
+
+</details>
+
+---
+
 ## Tutorial Flow
 
 ### Part 1: Vision Pipeline (~25 min)
