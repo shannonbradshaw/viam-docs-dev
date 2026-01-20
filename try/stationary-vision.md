@@ -2,7 +2,7 @@
 
 **Status:** 🟡 Draft
 
-**Time:** ~1.5 hours
+**Time:** ~1.25 hours
 **Components:** Camera + Compute
 **Physics required:** None (rendered images only)
 
@@ -78,18 +78,16 @@ A working inspection system with:
 
 | Part | Time | What You'll Do |
 |------|------|----------------|
-| [Part 1: Vision Pipeline](#part-1-vision-pipeline-25-min) | ~25 min | Set up camera, ML model, and vision service |
+| [Part 1: Vision Pipeline](#part-1-vision-pipeline-15-min) | ~15 min | Set up camera, ML model, and vision service |
 | [Part 2: Data Capture](#part-2-data-capture-15-min) | ~15 min | Configure automatic data sync and alerts |
 | [Part 3: Control Logic](#part-3-control-logic-30-min) | ~30 min | Write inspection module, deploy to machine |
 | [Part 4: Scale](#part-4-scale-10-min) | ~10 min | Create fragment, add second machine |
-| [Part 5: Fleet](#part-5-fleet-10-min) | ~10 min | Monitor fleet, push configuration updates |
-| [Part 6: Maintain](#part-6-maintain-10-min) | ~10 min | Debug and fix issues remotely |
-| [Part 7: Productize](#part-7-productize-15-min) | ~15 min | Build dashboard, white-label auth |
+| [Part 5: Productize](#part-5-productize-15-min) | ~15 min | Build dashboard, white-label auth |
 
 <details>
 <summary><strong>Full Section Outline</strong></summary>
 
-**[Part 1: Vision Pipeline](#part-1-vision-pipeline-25-min)** (~25 min)
+**[Part 1: Vision Pipeline](#part-1-vision-pipeline-15-min)** (~15 min)
 - [1.1 Launch the Simulation](#11-launch-the-simulation)
 - [1.2 Create a Machine in Viam](#12-create-a-machine-in-viam)
 - [1.3 Install viam-server](#13-install-viam-server)
@@ -118,20 +116,12 @@ A working inspection system with:
 - [4.1 Create a Fragment](#41-create-a-fragment)
 - [4.2 Parameterize Machine-Specific Values](#42-parameterize-machine-specific-values)
 - [4.3 Add a Second Machine](#43-add-a-second-machine)
+- [4.4 Fleet Management Capabilities](#44-fleet-management-capabilities)
 
-**[Part 5: Fleet](#part-5-fleet-10-min)** (~10 min)
-- [5.1 View Your Fleet](#51-view-your-fleet)
-- [5.2 Push a Configuration Update](#52-push-a-configuration-update)
-
-**[Part 6: Maintain](#part-6-maintain-10-min)** (~10 min)
-- [6.1 Simulate a Problem](#61-simulate-a-problem)
-- [6.2 Diagnose Remotely](#62-diagnose-remotely)
-- [6.3 Fix and Verify](#63-fix-and-verify)
-
-**[Part 7: Productize](#part-7-productize-15-min)** (~15 min)
-- [7.1 Create a Dashboard](#71-create-a-dashboard)
-- [7.2 Set Up White-Label Auth](#72-set-up-white-label-auth)
-- [7.3 (Optional) Configure Billing](#73-optional-configure-billing)
+**[Part 5: Productize](#part-5-productize-15-min)** (~15 min)
+- [5.1 Create a Dashboard](#51-create-a-dashboard)
+- [5.2 Set Up White-Label Auth](#52-set-up-white-label-auth)
+- [5.3 (Optional) Configure Billing](#53-optional-configure-billing)
 
 </details>
 
@@ -139,7 +129,7 @@ A working inspection system with:
 
 ## Tutorial Flow
 
-### Part 1: Vision Pipeline (~25 min)
+### Part 1: Vision Pipeline (~15 min)
 
 **Goal:** Get a working detection pipeline on one simulated camera.
 
@@ -436,7 +426,7 @@ Get notified if your inspection station goes offline. This is a simple trigger�
 
 That's it. If your inspection station loses connection for any reason—network issues, power loss, viam-server crash—you'll get an email.
 
-> **Other triggers:** You can also create triggers for "Part is online" (useful for knowing when a machine comes back) or "Data synced" (fires when data reaches the cloud). For detection-based alerts, see Part 7.
+> **Other triggers:** You can also create triggers for "Part is online" (useful for knowing when a machine comes back) or "Data synced" (fires when data reaches the cloud). For detection-based alerts, see Part 5.
 
 #### 2.3 View and Query Data
 
@@ -1744,196 +1734,34 @@ Both stations are now running identical inspection logic.
 
 [SCREENSHOT: Fleet view showing both machines online]
 
-**Checkpoint:** Two stations running identical inspection logic from a shared fragment. Device-specific values (camera path) are parameterized with variables. Update the fragment once, and both machines receive the change.
+#### 4.4 Fleet Management Capabilities
+
+With fragments in place, you have the foundation for managing fleets at any scale. Here's what's possible:
+
+**Push updates across your fleet:**
+- **Configuration changes** — Edit the fragment, and all machines using it receive the update automatically within seconds
+- **ML model updates** — Change which model the vision service uses; all machines switch to the new version
+- **Module updates** — Deploy new versions of your inspection logic across the fleet
+- **Capture settings** — Adjust data capture frequency, enable/disable components fleet-wide
+
+**Monitor and maintain remotely:**
+- **Fleet dashboard** — View all machines' status, last seen, and health from one screen
+- **Aggregated data** — Query inspection results across all stations ("How many FAILs across all machines this week?")
+- **Remote diagnostics** — View live camera feeds, check logs, and test components without physical access
+- **Alerts** — Get notified when any machine goes offline or exhibits anomalies
+
+**Handle machine-specific variations:**
+- **Fragment variables** — Parameterize device paths, IP addresses, serial numbers—anything that differs between physical machines
+- **Per-machine overrides** — Add machine-specific configuration on top of fragments when needed
+- **Hardware flexibility** — Same inspection logic works whether a station uses USB cameras, CSI cameras, or IP cameras
+
+This same pattern scales from 2 machines to 2,000. The fragment is your single source of truth; Viam handles the distribution.
+
+**Checkpoint:** Two stations running identical inspection logic from a shared fragment. Update the fragment once, and all machines receive the change automatically.
 
 ---
 
-### Part 5: Fleet (~10 min)
-
-**Goal:** Manage both stations as a fleet.
-
-**Skills:** Fleet monitoring, pushing updates.
-
-#### 5.1 View Your Fleet
-
-With multiple machines running, you need a way to monitor them together—not clicking through each one individually.
-
-**Open the fleet view:**
-
-1. In the Viam app, click **Fleet** in the left sidebar (or **Machines** in some views)
-2. You'll see a list of all machines in your organization
-
-[SCREENSHOT: Fleet view showing both inspection stations]
-
-The fleet view shows:
-- **Status:** Online/offline for each machine
-- **Last seen:** When each machine last connected
-- **Location:** If you've tagged machines by location
-
-**Check machine health:**
-
-Click on either machine to see its details:
-- Component status (is the camera responding?)
-- Recent logs
-- Resource usage (CPU, memory)
-
-[SCREENSHOT: Machine detail view with status indicators]
-
-**View aggregated data:**
-
-1. Click the **Data** tab at the organization level
-2. You'll see data from *all* machines combined
-3. Filter by machine, time range, or data type
-
-You can query: "How many FAIL detections across all stations in the last hour?" This is the foundation for dashboards and analytics.
-
-[SCREENSHOT: Data tab showing aggregated events from both machines]
-
-> **Two machines or two hundred:** This same view works regardless of fleet size. As you add machines, they appear here automatically. The fleet view is your single pane of glass for operations.
-
-#### 5.2 Push a Configuration Update
-
-One of the most powerful aspects of fragments is pushing updates. Let's change a setting and watch it propagate.
-
-**Modify the fragment:**
-
-Suppose you want to increase the data capture frequency to get more granular inspection data. Instead of capturing every 2 seconds, you want every 1 second.
-
-1. Go to **Fragments** in the left sidebar
-2. Open your `inspection-station` fragment
-3. Find the `part-detector` vision service configuration
-4. In the data capture settings, change the frequency from `2` to `1` seconds
-5. Click **Save**
-
-[SCREENSHOT: Editing fragment configuration]
-
-**Watch the update propagate:**
-
-1. Go back to the **Fleet** view
-2. Watch both machines briefly show as "Configuring" or "Restarting"
-3. Within 30 seconds, both machines are running the updated configuration
-
-[SCREENSHOT: Machines showing configuration update in progress]
-
-You didn't SSH into either machine. You didn't run any deployment commands. You changed the fragment, and Viam pushed the update automatically.
-
-**Verify the change:**
-
-1. Click into `inspection-station-1`
-2. Go to **Config** tab and check the vision service data capture settings
-3. Confirm the frequency is now 1 second
-
-[SCREENSHOT: Updated capture frequency in config]
-
-> **This is fleet management.** Need to update an ML model across 50 machines? Update the fragment. Need to roll back a bad change? Revert the fragment. The machines sync automatically. This same pattern scales from 2 machines to 2,000.
-
-**Checkpoint:** You can manage multiple machines from one place. Configuration changes propagate automatically.
-
----
-
-### Part 6: Maintain (~10 min)
-
-**Goal:** Debug and fix an issue.
-
-**Skills:** Remote diagnostics, log analysis, incident response.
-
-#### 6.1 Simulate a Problem
-
-In production, things break. Cameras get dirty, cables loosen, lighting changes. Let's simulate a problem and practice debugging.
-
-**Trigger the issue:**
-
-Click the button below to simulate camera degradation on `inspection-station-1`:
-
-[BUTTON: Degrade Camera]
-
-This simulates what happens when a camera lens gets dirty or lighting conditions change—the image becomes noisy and blurry, making ML detection unreliable.
-
-[SCREENSHOT: Simulation showing degraded camera view]
-
-**Notice the anomaly:**
-
-Within a few seconds, you should see signs of trouble:
-
-1. **Data:** Detection results become inconsistent—lower confidence scores, missed detections
-2. **Alerts:** You might receive unexpected alerts (or stop receiving expected ones)
-3. **Logs:** Error messages or warnings from the vision service
-
-In a real deployment, this is how you'd first learn about a problem—through monitoring data and alerts, not a phone call from the factory floor.
-
-#### 6.2 Diagnose Remotely
-
-Now let's investigate without physical access to the machine.
-
-**Check the logs:**
-
-1. In the Viam app, go to `inspection-station-1`
-2. Click the **Logs** tab
-3. Look for error messages or unusual output
-
-[SCREENSHOT: Logs showing detection anomalies]
-
-You might see:
-- Lower confidence scores than usual
-- Failed detections (no objects found when there should be)
-- Timeout errors if the camera is struggling
-
-**View the camera feed:**
-
-1. Go to the **Control** tab
-2. Open the `inspection-cam` stream
-3. Look at the image quality
-
-[SCREENSHOT: Degraded camera feed in Control tab]
-
-The issue is immediately visible: the camera feed is noisy or blurred. You've identified the root cause without leaving your desk.
-
-**Compare to the healthy station:**
-
-1. Open `inspection-station-2` in another tab
-2. View its camera feed
-3. Confirm the image quality is normal
-
-This comparison confirms the problem is isolated to station 1, not a systemic issue.
-
-> **Remote diagnostics in practice:** You just debugged a hardware issue without physical access. In a real deployment, the machine could be in another building, another city, or another country. Viam gives you the same visibility regardless of location.
-
-#### 6.3 Fix and Verify
-
-Let's fix the issue and confirm the system recovers.
-
-**Reset the camera:**
-
-In a real scenario, you'd dispatch maintenance to clean or replace the camera. For this simulation, click the reset button:
-
-[BUTTON: Reset Camera]
-
-This restores the camera to normal operation.
-
-**Verify the fix:**
-
-1. Go back to `inspection-station-1`
-2. Check the **Control** tab—the camera feed should be clear
-3. Check the **Logs** tab—detection should be working normally
-4. Wait for a few inspection cycles to confirm consistent results
-
-[SCREENSHOT: Restored camera feed and normal logs]
-
-**Document the incident:**
-
-In production, you'd want to track this:
-- When the issue started
-- How it was detected
-- What caused it
-- How it was resolved
-
-The data captured during the incident (the anomalous detections, the degraded images) is already in Viam's data service—you can query it later for incident reports or trend analysis.
-
-**Checkpoint:** You've diagnosed and fixed a production issue remotely.
-
----
-
-### Part 7: Productize (~15 min)
+### Part 5: Productize (~15 min)
 
 <!-- TODO: Add a section on alerting - query data for FAIL detections and send notifications programmatically -->
 
@@ -1941,7 +1769,7 @@ The data captured during the incident (the anomalous detections, the degraded im
 
 **Skills:** Building apps with Viam SDKs, white-label deployment.
 
-#### 7.1 Create a Dashboard
+#### 5.1 Create a Dashboard
 
 You've built a working system—but right now, only you can see it through the Viam app. Your customers need their own interface showing inspection results.
 
@@ -2089,7 +1917,7 @@ Open `http://localhost:5173` to see your dashboard.
 
 > **This is your product.** No Viam branding—your interface, your design. The same APIs can power a React app, mobile app, or enterprise dashboard.
 
-#### 7.2 Set Up White-Label Auth
+#### 5.2 Set Up White-Label Auth
 
 Your customers shouldn't log into Viam—they should log into *your* product. Viam supports white-label authentication so your branding appears throughout the experience.
 
@@ -2139,7 +1967,7 @@ For multi-tenant deployments, create separate organizations for each customer:
 
 This lets you ship a product where each customer has isolated access to their own inspection stations.
 
-#### 7.3 (Optional) Configure Billing
+#### 5.3 (Optional) Configure Billing
 
 If you're selling inspection-as-a-service, you need to bill customers. Viam can meter usage and integrate with your billing system.
 
@@ -2234,7 +2062,6 @@ These all use the same patterns: configure components, add services, write logic
 | Event | Trigger | Purpose |
 |-------|---------|---------|
 | Part appears | Timer or user action | New item to inspect |
-| Camera degradation | Part 5 trigger | Create debugging scenario |
 
 ---
 
@@ -2258,8 +2085,6 @@ From [block-definitions.md](../planning/block-definitions.md):
 
 **Fleet/Deployment:**
 - Configure Multiple Machines
-- Monitor a Fleet
-- Push Updates
 
 **Productize:**
 - Build a Customer Dashboard (TypeScript SDK)
@@ -2304,7 +2129,7 @@ At each step, explicitly connect to transferable skills:
 
 2. **ML model:** Pre-trained (provided) vs. walk through training? Pre-trained keeps focus on platform skills.
 
-3. ~~**Alert mechanism:** What works without user setup?~~ **Resolved:** Using machine health trigger (offline alert) with email notification. Detection-based alerts deferred to Part 7.
+3. ~~**Alert mechanism:** What works without user setup?~~ **Resolved:** Using machine health trigger (offline alert) with email notification. Detection-based alerts deferred to Part 5.
 
 4. **Second station:** Identical or slightly different? Identical is simpler; different shows fragment flexibility.
 
