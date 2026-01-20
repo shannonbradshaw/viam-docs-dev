@@ -1,0 +1,319 @@
+{
+  "components": [
+    {
+      "name": "hack-pose-look-straight-down",
+      "api": "rdk:component:switch",
+      "model": "erh:vmodutils:arm-position-saver",
+      "attributes": {
+        "joints": [
+          -0.076349139213562,
+          -0.20220564305782318,
+          -1.5693198442459106,
+          -0.0012806119630113246,
+          1.7407830953598022,
+          3.0671448707580566
+        ],
+        "arm": "arm",
+        "motion": ""
+      },
+      "ui_folder": {
+        "name": "vision"
+      }
+    },
+    {
+      "name": "board-cam",
+      "api": "rdk:component:camera",
+      "model": "erh:viam-chess:board-finder-cam",
+      "attributes": {
+        "output_size": 800,
+        "camera": "cam"
+      },
+      "frame": {
+        "parent": "cam",
+        "translation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "orientation": {
+          "type": "ov_degrees",
+          "value": {
+            "x": 0,
+            "y": 0,
+            "z": 1,
+            "th": 0
+          }
+        }
+      },
+      "ui_folder": {
+        "name": "vision"
+      }
+    }
+  ],
+  "services": [
+    {
+      "name": "piece-finder",
+      "api": "rdk:service:vision",
+      "model": "erh:viam-chess:piece-finder",
+      "attributes": {
+        "input": "board-cam"
+      },
+      "ui_folder": {
+        "name": "vision"
+      }
+    },
+    {
+      "name": "builtin",
+      "api": "rdk:service:motion",
+      "model": "rdk:builtin:builtin",
+      "attributes": {
+        "input_range_override": {
+          "arm": {
+            "3": {
+              "min": -1.5,
+              "max": 1.5
+            },
+            "5": {
+              "max": 4.14,
+              "min": 2.14
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "chess",
+      "api": "rdk:service:generic",
+      "model": "erh:viam-chess:chess",
+      "attributes": {
+        "cam": "cam",
+        "engine": "/usr/games/stockfish",
+        "gripper": "gripper",
+        "pose-start": "hack-pose-look-straight-down",
+        "piece-finder": "piece-finder",
+        "arm": "arm"
+      },
+      "ui_folder": {
+        "name": "app"
+      }
+    },
+    {
+      "name": "buttons",
+      "api": "rdk:service:generic",
+      "model": "erh:viam-streamdeck:streamdeck-any",
+      "attributes": {
+        "brightness": 100,
+        "keys": [
+          {
+            "color": "green",
+            "component": "chess",
+            "method": "do_command",
+            "args": [
+              {
+                "go": 1
+              }
+            ],
+            "text": "move 1",
+            "key": 0
+          },
+          {
+            "text": "move 2",
+            "key": 1,
+            "color": "green",
+            "component": "chess",
+            "method": "do_command",
+            "args": [
+              {
+                "go": 2
+              }
+            ]
+          },
+          {
+            "method": "do_command",
+            "args": [
+              {
+                "go": 10
+              }
+            ],
+            "text": "move 10",
+            "key": 2,
+            "color": "green",
+            "component": "chess"
+          },
+          {
+            "key": 3,
+            "color": "green",
+            "component": "chess",
+            "method": "do_command",
+            "args": [
+              {
+                "go": 40
+              }
+            ],
+            "text": "move 40"
+          },
+          {
+            "args": [
+              {
+                "reset": true
+              }
+            ],
+            "text": "reset",
+            "key": 4,
+            "color": "orange",
+            "component": "chess",
+            "method": "do_command"
+          },
+          {
+            "key": 5,
+            "color": "red",
+            "component": "chess",
+            "method": "do_command",
+            "args": [
+              {
+                "wipe": true
+              }
+            ],
+            "text": "wipe"
+          }
+        ],
+        "dials": [
+          {
+            "command": "skill",
+            "dial": 0,
+            "component": "chess"
+          }
+        ]
+      },
+      "ui_folder": {
+        "name": "app"
+      }
+    },
+    {
+      "name": "ocr",
+      "namespace": "rdk",
+      "type": "vision",
+      "model": "erh:viam-keras-ocr:keras-ocr-service",
+      "attributes": {
+        "default_camera": "cam",
+        "confidence": 0.6
+      },
+      "depends_on": [
+        "cam"
+      ],
+      "ui_folder": {
+        "name": "vision"
+      }
+    },
+    {
+      "name": "shell",
+      "api": "rdk:service:shell",
+      "attributes": {}
+    },
+    {
+      "name": "marker-finder-model",
+      "api": "rdk:service:mlmodel",
+      "model": "viam:mlmodel-tflite:tflite_cpu",
+      "attributes": {
+        "label_path": "${packages.ml_model.chess-piece-model1}/labels.txt",
+        "package_reference": "c2ba7a2c-e229-484c-b99a-5873631f4ea8/chess-piece-model1",
+        "model_path": "${packages.ml_model.chess-piece-model1}/chess-piece-model1.tflite"
+      },
+      "ui_folder": {
+        "name": "vision"
+      }
+    },
+    {
+      "name": "marker-finder-service",
+      "api": "rdk:service:vision",
+      "model": "rdk:builtin:mlmodel",
+      "attributes": {
+        "mlmodel_name": "marker-finder-model",
+        "camera_name": "cam",
+        "default_minimum_confidence": 0.35
+      },
+      "ui_folder": {
+        "name": "vision"
+      }
+    }
+  ],
+  "modules": [
+    {
+      "type": "registry",
+      "name": "erh_vmodutils",
+      "module_id": "erh:vmodutils",
+      "version": "latest"
+    },
+    {
+      "type": "registry",
+      "name": "erh_viam-chess",
+      "module_id": "erh:viam-chess",
+      "version": "latest",
+      "reload_path": "~/.viam/packages-local/erh_viam-chess_from_reload-module.tar.gz",
+      "reload_enabled": true,
+      "envx": {
+        "OTEL_SERVICE_NAME": "chess1",
+        "OTEL_EXPORTER_OTLP_ENDPOINT": "https://ingress.europe-west4.gcp.dash0.com:4317",
+        "OTEL_EXPORTER_OTLP_PROTOCOL": "grpc",
+        "OTEL_EXPORTER_OTLP_HEADERS": "Authorization=Bearer auth_wlT8hBlFmoMZ6mW3ttFu0PKFvPF5e3ap"
+      }
+    },
+    {
+      "type": "registry",
+      "name": "erh_viam-streamdeck",
+      "module_id": "erh:viam-streamdeck",
+      "version": "latest",
+      "reload_path": "~/.viam/packages-local/erh_viam-streamdeck_from_reload-module.tar.gz",
+      "reload_enabled": false
+    },
+    {
+      "type": "registry",
+      "name": "erh_viam-keras-ocr_from_reload",
+      "module_id": "erh:viam-keras-ocr",
+      "version": "latest-with-prerelease",
+      "reload_path": "~/.viam/packages-local/erh_viam-keras-ocr_from_reload-dist-archive.tar.gz",
+      "reload_enabled": true
+    },
+    {
+      "type": "registry",
+      "name": "viam_tflite_cpu",
+      "module_id": "viam:tflite_cpu",
+      "version": "latest"
+    }
+  ],
+  "packages": [
+    {
+      "name": "chess-piece-model1",
+      "package": "c2ba7a2c-e229-484c-b99a-5873631f4ea8/chess-piece-model1",
+      "type": "ml_model",
+      "version": "2025-07-12T20-47-24"
+    }
+  ],
+  "fragments": [
+    {
+      "id": "f6e98d80-20a0-4fb6-9cb3-7b527a91ec10",
+      "variables": {
+        "arm-name": "arm",
+        "arm-ip-address": "10.1.1.50",
+        "cam-serial-number": "327122073698"
+      }
+    }
+  ],
+  "fragment_mods": [
+    {
+      "fragment_id": "f6e98d80-20a0-4fb6-9cb3-7b527a91ec10",
+      "mods": [
+        {
+          "$set": {
+            "components.arm.frame.translation.z": -10
+          }
+        },
+        {
+          "$set": {
+            "modules.viam_ufactory.version": "1.1.25-rc0"
+          }
+        }
+      ]
+    }
+  ]
+}
