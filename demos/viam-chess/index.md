@@ -1,8 +1,10 @@
 # viam-chess: A Chess-Playing Robot
 
-You just watched a robot arm play chess—picking up pieces, making moves calculated by Stockfish, and resetting the board when the game ends. This guide explains how it works and what Viam features make it possible.
+A robot arm that plays chess—picking up pieces, making moves calculated by Stockfish, and resetting the board when the game ends.
 
-**Source code:** [github.com/erh/viam-chess](https://github.com/erh/viam-chess)
+**[Watch the demo →](TODO_VIDEO_LINK)** | **Source code:** [github.com/erh/viam-chess](https://github.com/erh/viam-chess)
+
+This guide explains how it works and what Viam features make it possible.
 
 ---
 
@@ -20,7 +22,7 @@ The arm's IP address, camera serial number, gripper offsets, joint limits — no
 
 **Viam pattern:** Fragments and variables for machine-specific values
 
-### The Hard Parts Are Built-In
+### You Say Where, Viam Figures Out How
 
 Moving a gripper to a 3D point requires inverse kinematics, path planning, and collision avoidance. The chess code just says "move here" — Viam's motion service figures out the joint angles and trajectory. The camera is mounted on the arm? The frame system automatically transforms coordinates as the arm moves.
 
