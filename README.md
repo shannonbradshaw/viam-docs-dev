@@ -21,7 +21,7 @@ This is the living navigation for the new Viam documentation structure. Click an
 ## [Try](./try/INDEX.md) 🟡
 *Zero-friction simulation experiences — full journey through all 5 stages*
 
-- [Stationary Vision Simulation](./try/stationary-vision.md) 🟡
+- [Stationary Vision Simulation](./try/stationary-vision/index.md) 🟡
 - [Mobile Base Simulation](./try/mobile-base.md) 🔴
 - [Arm + Vision Simulation](./try/arm-vision.md) 🔴
 
@@ -109,7 +109,9 @@ These are our working documents, not user-facing content:
 - [Content Guidelines](./planning/content-guidelines.md) 🟡
 - [Hardware Recommendations](./planning/hardware-recommendations.md) 🔴
 - [Simulation Requirements](./planning/simulation-requirements.md) 🟡
+- [Module-First Pattern](./planning/module-first-pattern.md) 🟢
 - [Data Egress Patterns](./planning/data-egress-patterns.md) 🔴
+- [Q1 Docs Punch List](./planning/q1-docs.md) 🔴
 
 ---
 
@@ -117,7 +119,7 @@ These are our working documents, not user-facing content:
 
 | Section | Total Items | 🔴 | 🟡 | 🟢 |
 |---------|-------------|-----|-----|-----|
-| Understand | 3 | 2 | 1 | 0 |
+| Understand | 3 | 1 | 1 | 1 |
 | Try | 3 | 2 | 1 | 0 |
 | Build | 33 | 33 | 0 | 0 |
 | Deploy | 5 | 5 | 0 | 0 |
@@ -125,5 +127,5 @@ These are our working documents, not user-facing content:
 | Maintain | 6 | 6 | 0 | 0 |
 | Reference | 4 | 4 | 0 | 0 |
 | Work Cells | 4 | 4 | 0 | 0 |
-| Planning | 8 | 2 | 4 | 2 |
-| **Total** | **75** | **67** | **6** | **2** |
+| Planning | 10 | 3 | 4 | 3 |
+| **Total** | **77** | **68** | **6** | **3** |
