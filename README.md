@@ -38,41 +38,41 @@ This is the living navigation for the new Viam documentation structure. Click an
 
 ---
 
-## [Deploy](./deploy/INDEX.md) 🔴
+## Deploy 🔴
 *Stage 2: First Deployment problems*
 
-- [Remote Access and NAT Traversal](./deploy/remote-access.md) 🔴
-- [Configuration in the Field](./deploy/field-configuration.md) 🔴
-- [Handling Connectivity Issues](./deploy/connectivity.md) 🔴
-- [Alerts and Monitoring](./deploy/alerts-monitoring.md) 🔴
-- [Environment Differences](./deploy/environment-differences.md) 🔴
+- Remote Access and NAT Traversal
+- Configuration in the Field
+- Handling Connectivity Issues
+- Alerts and Monitoring
+- Environment Differences
 
 ---
 
-## [Scale](./scale/INDEX.md) 🔴
+## Scale 🔴
 *Stages 3-4: Multiple Units and Fleet at Scale problems*
 
-- [Provisioning New Devices](./scale/provisioning.md) 🔴
-- [Configuration Management](./scale/configuration-management.md) 🔴
-- [Handling Hardware Variance](./scale/hardware-variance.md) 🔴
-- [Fleet Monitoring](./scale/fleet-monitoring.md) 🔴
-- [Data Architecture Decisions](./scale/data-architecture.md) 🔴
-- [OTA Updates](./scale/ota-updates.md) 🔴
-- [Staged Rollouts](./scale/staged-rollouts.md) 🔴
-- [Multi-tenancy](./scale/multi-tenancy.md) 🔴
-- [Customer Delivery](./scale/customer-delivery.md) 🔴
+- Provisioning New Devices
+- Configuration Management
+- Handling Hardware Variance
+- Fleet Monitoring
+- Data Architecture Decisions
+- OTA Updates
+- Staged Rollouts
+- Multi-tenancy
+- Customer Delivery
 
 ---
 
-## [Maintain](./maintain/INDEX.md) 🔴
+## Maintain 🔴
 *Stage 5: Ongoing Maintenance problems*
 
-- [Remote Debugging](./maintain/remote-debugging.md) 🔴
-- [Log Access](./maintain/log-access.md) 🔴
-- [Scheduled Tasks](./maintain/scheduled-tasks.md) 🔴
-- [Pushing Hotfixes](./maintain/hotfixes.md) 🔴
-- [Model Updates and Retraining](./maintain/model-updates.md) 🔴
-- [Performance Degradation](./maintain/performance-degradation.md) 🔴
+- Remote Debugging
+- Log Access
+- Scheduled Tasks
+- Pushing Hotfixes
+- Model Updates and Retraining
+- Performance Degradation
 
 ---
 
