@@ -40,20 +40,33 @@ gz topic -t "/model/xarm6/joint/joint5/0/cmd_pos" -m gz.msgs.Double -p "data: -1
 gz topic -t "/model/xarm6/joint/joint6/0/cmd_pos" -m gz.msgs.Double -p "data: 0.0" 2>/dev/null || true
 sleep 2
 
-# Start web viewer
-echo ""
-echo "Starting web viewer..."
-python3 /opt/web_viewer.py &
-VIEWER_PID=$!
+# Start viam-server if config exists, otherwise start web viewer
+if [ -f /etc/viam.json ]; then
+    echo ""
+    echo "Starting viam-server..."
+    /usr/local/bin/viam-server.AppImage --appimage-extract-and-run -config /etc/viam.json &
+    VIAM_PID=$!
+    echo "viam-server started with PID $VIAM_PID"
+else
+    echo ""
+    echo "No /etc/viam.json found - starting web viewer instead"
+    echo "To use viam-server, mount your config: -v /path/to/viam.json:/etc/viam.json"
+    python3 /opt/web_viewer.py &
+    VIEWER_PID=$!
+fi
 
 echo ""
 echo "=========================================="
 echo "POC Running!"
 echo "=========================================="
 echo ""
-echo "  Web Viewer:  http://localhost:8080"
+echo "  Camera topic: /wrist_camera/image"
 echo ""
-echo "  Camera topic: /camera"
+if [ -f /etc/viam.json ]; then
+echo "  viam-server: running (use Viam app to view camera)"
+else
+echo "  Web Viewer:  http://localhost:8080"
+fi
 echo ""
 echo "=========================================="
 echo ""

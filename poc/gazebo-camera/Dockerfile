@@ -27,12 +27,37 @@ RUN apt-get update && apt-get install -y \
 RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
+    python3-venv \
     python3-gz-transport13 \
     python3-gz-msgs10 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies for Viam module and web viewer
 RUN pip3 install viam-sdk Pillow flask numpy
+
+# Install viam-server AppImage (use --appimage-extract-and-run at runtime to avoid ARM64 SIGBUS bug)
+RUN curl -fsSL https://storage.googleapis.com/packages.viam.com/apps/viam-server/viam-server-stable-$(uname -m).AppImage \
+    -o /usr/local/bin/viam-server.AppImage \
+    && chmod +x /usr/local/bin/viam-server.AppImage
+
+# Install SSH server and sudo
+RUN apt-get update && apt-get install -y \
+    openssh-server \
+    sudo \
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir /var/run/sshd
+
+# Create non-root user with sudo access
+RUN useradd -m -s /bin/bash viam \
+    && echo 'viam:viam' | chpasswd \
+    && usermod -aG sudo viam \
+    && echo 'viam ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+# Configure SSH
+RUN sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config \
+    && mkdir -p /home/viam/.ssh \
+    && chmod 700 /home/viam/.ssh \
+    && chown viam:viam /home/viam/.ssh
 
 # Copy world files and models
 COPY worlds/ /opt/worlds/
@@ -44,9 +69,10 @@ ENV GZ_SIM_RESOURCE_PATH=/opt/models
 # Copy Viam module
 COPY viam-gazebo-camera/ /opt/viam/modules/viam-gazebo-camera/
 
-# Copy web viewers
+# Copy web viewers and spawner
 COPY web_viewer.py /opt/web_viewer.py
 COPY web_viewer_fruit.py /opt/web_viewer_fruit.py
+COPY can_spawner.py /opt/can_spawner.py
 
 # Copy startup scripts
 COPY entrypoint.sh /entrypoint.sh
@@ -57,8 +83,8 @@ RUN chmod +x /entrypoint.sh /entrypoint_fruit.sh
 COPY viam-config.json /opt/viam-config.json
 COPY viam-config-fruit.json /opt/viam-config-fruit.json
 
-# Expose web viewer port
-EXPOSE 8080
+# Expose ports: web viewer (8080), SSH (22), viam-server (8443)
+EXPOSE 8080 22 8443
 
 WORKDIR /opt
 
