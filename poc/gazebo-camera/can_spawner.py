@@ -53,7 +53,7 @@ def spawn_can(name: str, dented: bool, y_offset: float):
     req = f'sdf_filename: "model://{model_type}", name: "{name}", pose: {{position: {{x: {SPAWN_X}, y: {BELT_Y + y_offset}, z: {BELT_Z}}}}}'
 
     cmd = [
-        "gz", "service", "-s", "/world/fruit_inspection/create",
+        "gz", "service", "-s", "/world/cylinder_inspection/create",
         "--reqtype", "gz.msgs.EntityFactory",
         "--reptype", "gz.msgs.Boolean",
         "--timeout", "2000",
@@ -72,7 +72,7 @@ def spawn_can(name: str, dented: bool, y_offset: float):
 def delete_can(name: str):
     """Delete a can from the simulation."""
     cmd = [
-        "gz", "service", "-s", "/world/fruit_inspection/remove",
+        "gz", "service", "-s", "/world/cylinder_inspection/remove",
         "--reqtype", "gz.msgs.Entity",
         "--reptype", "gz.msgs.Boolean",
         "--timeout", "1000",
@@ -114,7 +114,7 @@ def set_can_position(name: str, x: float, y_offset: float):
     """Set the can position directly (works because cans are kinematic)."""
     z = 0.54  # Height on belt
     cmd = [
-        "gz", "service", "-s", "/world/fruit_inspection/set_pose/blocking",
+        "gz", "service", "-s", "/world/cylinder_inspection/set_pose/blocking",
         "--reqtype", "gz.msgs.Pose",
         "--reptype", "gz.msgs.Boolean",
         "--timeout", "200",
