@@ -1,8 +1,8 @@
 # Stationary Vision Tutorial
 
-**Status:** 🟡 Draft
+**Status:** 🟡 Draft | [View TODOs](./todo.md)
 
-**Time:** ~75 minutes
+**Time:** ~90 minutes
 **Components:** Camera + Compute
 **Physics required:** None (rendered images only)
 
@@ -80,7 +80,7 @@ A working inspection system with:
 |------|------|----------------|
 | [Part 1: Vision Pipeline](./part1.md) | ~15 min | Set up camera, ML model, and vision service |
 | [Part 2: Data Capture](./part2.md) | ~15 min | Configure automatic data sync and alerts |
-| [Part 3: Control Logic](./part3.md) | ~25 min | Write inspection module, deploy to machine |
+| [Part 3: Control Logic](./part3.md) | ~40 min | Write inspection module in Go, deploy to machine |
 | [Part 4: Scale](./part4.md) | ~10 min | Create fragment, add second machine |
 | [Part 5: Productize](./part5.md) | ~10 min | Build dashboard, white-label auth |
 
@@ -101,14 +101,17 @@ A working inspection system with:
 - [2.3 View and Query Data](./part2.md#23-view-and-query-data)
 - [2.4 Summary](./part2.md#24-summary)
 
-**[Part 3: Control Logic](./part3.md)** (~30 min)
+**[Part 3: Control Logic](./part3.md)** (~40 min)
 - [3.1 Set Up Your Project](./part3.md#31-set-up-your-project)
-- [3.2 Build the Inspector](./part3.md#32-build-the-inspector)
-- [3.3 Write the Development CLI](./part3.md#33-write-the-development-cli)
+- [3.2 Connect to Your Machine](./part3.md#32-connect-to-your-machine)
+- [3.3 Build the Detector](./part3.md#33-build-the-detector)
 - [3.4 Configure the Rejector](./part3.md#34-configure-the-rejector)
-- [3.5 Test the Inspector](./part3.md#35-test-the-inspector)
-- [3.6 Deploy as a Module](./part3.md#36-deploy-as-a-module)
-- [3.7 Summary](./part3.md#37-summary)
+- [3.5 Add Rejection Logic](./part3.md#35-add-rejection-logic)
+- [3.6 Add the DoCommand Interface](./part3.md#36-add-the-docommand-interface)
+- [3.7 Structure as a Viam Resource](./part3.md#37-structure-as-a-viam-resource)
+- [3.8 Add Module Registration](./part3.md#38-add-module-registration)
+- [3.9 Deploy to the Machine](./part3.md#39-deploy-to-the-machine)
+- [3.10 Summary](./part3.md#310-summary)
 
 **[Part 4: Scale](./part4.md)** (~10 min)
 - [4.1 Create a Fragment](./part4.md#41-create-a-fragment)
