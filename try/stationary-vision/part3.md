@@ -413,6 +413,8 @@ type Config struct {
 
 **Update Validate to include the rejector:**
 
+Add the rejector validation check and include `cfg.Rejector` in the returned dependencies:
+
 ```go
 func (cfg *Config) Validate(path string) ([]string, error) {
 	if cfg.Camera == "" {
@@ -421,10 +423,10 @@ func (cfg *Config) Validate(path string) ([]string, error) {
 	if cfg.VisionService == "" {
 		return nil, fmt.Errorf("vision_service is required")
 	}
-	if cfg.Rejector == "" {
-		return nil, fmt.Errorf("rejector is required")
-	}
-	return []string{cfg.Camera, cfg.VisionService, cfg.Rejector}, nil
+	if cfg.Rejector == "" {                                          // NEW
+		return nil, fmt.Errorf("rejector is required")               // NEW
+	}                                                                // NEW
+	return []string{cfg.Camera, cfg.VisionService, cfg.Rejector}, nil  // CHANGED: added cfg.Rejector
 }
 ```
 
@@ -441,7 +443,7 @@ type Inspector struct {
 
 **Update NewInspector to get the rejector:**
 
-Add this after getting the detector:
+Add the rejector lookup after getting the detector, and include it in the returned struct:
 
 ```go
 func NewInspector(deps resource.Dependencies, conf *Config, logger logging.Logger) (*Inspector, error) {
@@ -450,17 +452,16 @@ func NewInspector(deps resource.Dependencies, conf *Config, logger logging.Logge
 		return nil, fmt.Errorf("failed to get vision service %q: %w", conf.VisionService, err)
 	}
 
-	// Add this block:
-	rejector, err := motor.FromDependencies(deps, conf.Rejector)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get rejector %q: %w", conf.Rejector, err)
-	}
+	rejector, err := motor.FromDependencies(deps, conf.Rejector)  // NEW
+	if err != nil {                                                // NEW
+		return nil, fmt.Errorf("failed to get rejector %q: %w", conf.Rejector, err)  // NEW
+	}                                                              // NEW
 
 	return &Inspector{
 		conf:     conf,
 		logger:   logger,
 		detector: detector,
-		rejector: rejector, // Add this
+		rejector: rejector,  // NEW
 	}, nil
 }
 ```
@@ -529,7 +530,7 @@ conf := &inspector.Config{
 }
 ```
 
-Replace the detection code at the end of `realMain()` with a switch:
+Replace the detection code at the end of `realMain()` (the four lines from `label, confidence, err := insp.Detect(ctx)` through `logger.Infof(...)`) with this switch:
 
 ```go
 // Handle the requested command
@@ -655,7 +656,7 @@ func (i *Inspector) DoCommand(ctx context.Context, req map[string]interface{}) (
 
 **Update the CLI to use DoCommand:**
 
-This verifies the interface works the same way it will when called remotely. Replace the switch statement in `cmd/cli/main.go`:
+This verifies the interface works the same way it will when called remotely. Replace the switch statement you added in section 3.5 with this version that calls through `DoCommand`:
 
 ```go
 switch *cmd {
@@ -697,15 +698,17 @@ To run as a module, your inspector must implement Viam's `resource.Resource` int
 
 **Update the Inspector struct:**
 
+Add the embedded `AlwaysRebuild` struct and a `name` field:
+
 ```go
 // Inspector implements resource.Resource for the generic service API.
 type Inspector struct {
 	// AlwaysRebuild is an embedded struct that tells Viam to destroy and
 	// recreate this service when config changes, rather than trying to
 	// update it in place. This is simpler than implementing Reconfigure().
-	resource.AlwaysRebuild
+	resource.AlwaysRebuild  // NEW
 
-	name     resource.Name // Add this field
+	name     resource.Name  // NEW
 	conf     *Config
 	logger   logging.Logger
 	detector vision.Service
@@ -715,11 +718,13 @@ type Inspector struct {
 
 **Update the constructor to accept a resource name:**
 
+Add a `name` parameter and include it in the returned struct:
+
 ```go
 // NewInspector creates an inspector. This constructor is used by both CLI and module.
 func NewInspector(
 	deps resource.Dependencies,
-	name resource.Name, // Add this parameter
+	name resource.Name,  // NEW parameter
 	conf *Config,
 	logger logging.Logger,
 ) (*Inspector, error) {
@@ -734,7 +739,7 @@ func NewInspector(
 	}
 
 	return &Inspector{
-		name:     name, // Add this
+		name:     name,  // NEW
 		conf:     conf,
 		logger:   logger,
 		detector: detector,
@@ -770,12 +775,13 @@ import (
 )
 ```
 
-Update the NewInspector call:
+Update the `NewInspector` call to pass a resource name as the second argument:
 
 ```go
 // generic.Named creates a resource name for the generic service API.
 // The string "inspector" is just a local name for logging/debugging.
 insp, err := inspector.NewInspector(deps, generic.Named("inspector"), conf, logger)
+//                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^ NEW argument
 ```
 
 **Test it:**
