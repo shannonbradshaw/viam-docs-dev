@@ -27,7 +27,7 @@
   - Part 5: JSON config, fragment editor, fleet view
   - Part 6: Teleop dashboard, custom dashboard, branded login
 
-- [ ] **ML model** - Create and upload `can-quality-classifier` model to registry
+- [ ] **ML model** - Create and upload `can-defect-detection` model to registry
   - Currently referenced but doesn't exist
   - Need training data from simulation
   - Or use a placeholder/mock for tutorial purposes

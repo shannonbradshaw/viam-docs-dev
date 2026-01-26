@@ -153,7 +153,7 @@ The ML model service loads a trained model and makes it available for inference.
 
 1. In the `can-classifier` configuration panel, click **Select model**
 2. Click the **Registry** tab
-3. Search for `can-quality-classifier` (a model we created for this tutorial that classifies cans as PASS or FAIL based on dent detection)
+3. Search for `can-defect-detection` (a model we created for this tutorial that detects cans and classifies them as PASS or FAIL based on dent detection)
 4. Select it from the list
 5. Click **Save config**
 
