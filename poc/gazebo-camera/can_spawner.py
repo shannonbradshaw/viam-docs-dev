@@ -7,6 +7,8 @@ Moves kinematic cans along the belt using position updates.
 Removes cans when they reach the output end.
 
 About 1 in 10 cans are dented (defective).
+
+Uses gz-transport Python bindings for efficient pose updates.
 """
 
 import time
@@ -14,20 +16,29 @@ import random
 import subprocess
 import threading
 
+from gz.transport13 import Node
+from gz.msgs10.pose_pb2 import Pose
+from gz.msgs10.boolean_pb2 import Boolean
+from gz.msgs10.entity_pb2 import Entity
+from gz.msgs10.entity_factory_pb2 import EntityFactory
+
 # Configuration
-SPAWN_INTERVAL = 1.0  # seconds between spawns
+SPAWN_INTERVAL = 2.0  # seconds between spawns
 SPAWN_X = -0.92  # X position where cans spawn (input end)
 DELETE_X = 1.00  # X position where cans are deleted (output end)
 BELT_Y = 0.0  # Y position (center of belt)
 BELT_Z = 0.60  # Z position (slightly above belt to drop)
 DENT_PROBABILITY = 0.1  # 10% chance of dented can
 CHECK_INTERVAL = 0.033  # seconds between position updates (~30Hz, matches camera)
-BELT_SPEED = 0.18  # meters per second
+BELT_SPEED = 0.06  # meters per second (slow, smooth movement)
 
 # Track spawned cans
-cans = {}  # name -> {'dented': bool, 'x_pos': float, 'y_offset': float}
+cans = {}  # name -> {'dented': bool, 'spawn_time': float, 'y_offset': float}
 can_counter = 0
 lock = threading.Lock()
+
+# gz-transport node (initialized in main)
+node = None
 
 
 def log(msg):
@@ -36,7 +47,7 @@ def log(msg):
 
 
 def run_gz_command(cmd, timeout=5):
-    """Run a gz command and return success status."""
+    """Run a gz command and return success status (fallback for spawn/delete)."""
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
         return result.returncode == 0, result.stdout, result.stderr
@@ -86,63 +97,51 @@ def delete_can(name: str):
     return False
 
 
-def get_can_position(name: str):
-    """Get the current X position of a can."""
-    cmd = ["gz", "model", "-m", name, "-p"]
-    success, stdout, _ = run_gz_command(cmd, timeout=2)
-
-    if success and "XYZ" in stdout:
-        # Parse position from output
-        # Format: [x y z]
-        try:
-            lines = stdout.split('\n')
-            for i, line in enumerate(lines):
-                if 'XYZ' in line:
-                    # Next line has the position
-                    pos_line = lines[i + 1].strip()
-                    # Parse [x y z]
-                    pos_line = pos_line.strip('[]')
-                    parts = pos_line.split()
-                    if len(parts) >= 3:
-                        return float(parts[0])
-        except:
-            pass
-    return None
-
-
 def set_can_position(name: str, x: float, y_offset: float):
-    """Set the can position directly (works because cans are kinematic)."""
+    """Set the can position using gz-transport (much faster than subprocess)."""
+    global node
+
     z = 0.54  # Height on belt
-    cmd = [
-        "gz", "service", "-s", "/world/cylinder_inspection/set_pose/blocking",
-        "--reqtype", "gz.msgs.Pose",
-        "--reptype", "gz.msgs.Boolean",
-        "--timeout", "200",
-        "--req", f'name: "{name}", position: {{x: {x}, y: {BELT_Y + y_offset}, z: {z}}}'
-    ]
-    run_gz_command(cmd, timeout=0.5)
+
+    # Create pose message
+    pose = Pose()
+    pose.name = name
+    pose.position.x = x
+    pose.position.y = BELT_Y + y_offset
+    pose.position.z = z
+
+    # Call service with correct signature: (service, request, request_type, response_type, timeout)
+    try:
+        success, response = node.request(
+            "/world/cylinder_inspection/set_pose",
+            pose,
+            Pose,
+            Boolean,
+            100  # timeout in ms
+        )
+        return success
+    except Exception as e:
+        return False
 
 
 def can_manager():
     """Thread that manages cans - moves them along belt and removes old ones."""
     global cans
 
-    last_time = time.time()
     while True:
         current_time = time.time()
-        elapsed = current_time - last_time
-        last_time = current_time
 
         with lock:
             to_delete = []
 
             for name, data in list(cans.items()):
-                # Move can forward based on actual elapsed time
-                data['x_pos'] += BELT_SPEED * elapsed
-                set_can_position(name, data['x_pos'], data['y_offset'])
+                # Calculate position based on time since spawn (absolute, not incremental)
+                elapsed_since_spawn = current_time - data['spawn_time']
+                x_pos = SPAWN_X + (BELT_SPEED * elapsed_since_spawn)
+                set_can_position(name, x_pos, data['y_offset'])
 
                 # Check if reached end
-                if data['x_pos'] > DELETE_X:
+                if x_pos > DELETE_X:
                     to_delete.append(name)
 
             # Delete cans that reached the end
@@ -173,7 +172,7 @@ def spawner():
             with lock:
                 cans[name] = {
                     'dented': dented,
-                    'x_pos': SPAWN_X,
+                    'spawn_time': time.time(),
                     'y_offset': y_offset
                 }
 
@@ -182,6 +181,8 @@ def spawner():
 
 def main():
     """Main entry point."""
+    global node
+
     log("=" * 50)
     log("Can Spawner Starting")
     log("=" * 50)
@@ -193,6 +194,10 @@ def main():
     # Wait for Gazebo to be ready
     log("Waiting for Gazebo...")
     time.sleep(5)
+
+    # Initialize gz-transport node
+    log("Initializing gz-transport...")
+    node = Node()
 
     # Start can manager thread (moves cans and deletes at end)
     manager_thread = threading.Thread(target=can_manager, daemon=True)
