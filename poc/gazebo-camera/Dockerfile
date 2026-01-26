@@ -66,10 +66,11 @@ COPY models/ /opt/models/
 # Set Gazebo resource path for custom models
 ENV GZ_SIM_RESOURCE_PATH=/opt/models
 
-# Copy web viewers and spawner
+# Copy web viewers, spawner, and training capture script
 COPY web_viewer.py /opt/web_viewer.py
 COPY web_viewer_fruit.py /opt/web_viewer_fruit.py
 COPY can_spawner.py /opt/can_spawner.py
+COPY capture_training_data.py /opt/capture_training_data.py
 
 # Copy startup scripts
 COPY entrypoint.sh /entrypoint.sh
