@@ -80,8 +80,8 @@ RUN chmod +x /entrypoint.sh /entrypoint_fruit.sh
 COPY viam-config.json /opt/viam-config.json
 COPY viam-config-fruit.json /opt/viam-config-fruit.json
 
-# Expose ports: web viewer (8080), SSH (22), viam-server (8443)
-EXPOSE 8080 22 8443
+# Expose ports: web viewer (8081), viam-server web (8080), SSH (22), viam-server gRPC (8443)
+EXPOSE 8081 8080 22 8443
 
 WORKDIR /opt
 

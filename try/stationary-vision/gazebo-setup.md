@@ -41,7 +41,7 @@ The file should look like:
 ## Step 4: Run the Container
 
 ```bash
-docker run --name gz-viam -d -p 8080:8080 -p 8443:8443 -v ~/viam-config.json:/etc/viam.json gz-harmonic-viam
+docker run --name gz-viam -d -p 8080:8080 -p 8081:8081 -p 8443:8443 -v ~/viam-config.json:/etc/viam.json gz-harmonic-viam
 ```
 
 Replace `~/viam-config.json` with the actual path to your config file.
@@ -57,6 +57,18 @@ You should see:
 - viam-server starting with your machine ID
 - "Can Inspection Simulation Running!" message
 - Can spawner starting (spawns cans on conveyor belt)
+
+## Step 5: View the Simulation
+
+Open **http://localhost:8081** in your browser to see the simulation cameras.
+
+You'll see two camera feeds:
+- **Overview Camera** — An elevated view of the entire work cell showing cans moving along the conveyor belt
+- **Inspection Camera** — The overhead view used for defect detection (this is the camera you'll configure in Viam)
+
+[SCREENSHOT: Web viewer showing both camera feeds]
+
+This view helps you understand what's happening in the simulation as you work through the tutorial. Keep this tab open alongside the Viam app.
 
 ---
 
@@ -96,11 +108,12 @@ This can happen with certain viam-server versions on ARM64. The provided Docker 
 
 ## Available Camera Topics
 
-The simulation includes this camera topic:
+The simulation includes these camera topics:
 
 | Topic | Description |
 |-------|-------------|
-| `/inspection_camera` | Overhead RGB camera viewing the conveyor belt |
+| `/overview_camera` | Elevated view of the entire work cell |
+| `/inspection_camera` | Overhead RGB camera for defect detection (640x480) |
 
 ## Managing the Container
 
@@ -126,5 +139,7 @@ docker rm gz-viam
 To run multiple containers, use different names and ports:
 
 ```bash
-docker run --name gz-viam-2 -d -p 8081:8080 -p 8444:8443 -v ~/viam-config-2.json:/etc/viam.json gz-harmonic-viam
+docker run --name gz-viam-2 -d -p 9080:8080 -p 9081:8081 -p 9443:8443 -v ~/viam-config-2.json:/etc/viam.json gz-harmonic-viam
 ```
+
+The second instance's web viewer would be at http://localhost:9081.

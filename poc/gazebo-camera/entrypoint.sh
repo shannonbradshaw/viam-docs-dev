@@ -34,7 +34,13 @@ echo "Starting can spawner..."
 python3 /opt/can_spawner.py &
 SPAWNER_PID=$!
 
-# Start viam-server if config exists, otherwise start web viewer
+# Start web viewer (always runs for camera visualization)
+echo ""
+echo "Starting web viewer..."
+python3 /opt/web_viewer.py &
+VIEWER_PID=$!
+
+# Start viam-server if config exists
 if [ -f /etc/viam.json ]; then
     echo ""
     echo "Starting viam-server..."
@@ -43,10 +49,8 @@ if [ -f /etc/viam.json ]; then
     echo "viam-server started with PID $VIAM_PID"
 else
     echo ""
-    echo "No /etc/viam.json found - starting web viewer instead"
+    echo "No /etc/viam.json found - viam-server not started"
     echo "To use viam-server, mount your config: -v /path/to/viam.json:/etc/viam.json"
-    python3 /opt/web_viewer.py &
-    VIEWER_PID=$!
 fi
 
 echo ""
@@ -54,12 +58,10 @@ echo "=========================================="
 echo "Can Inspection Simulation Running!"
 echo "=========================================="
 echo ""
-echo "  Camera topic: /inspection_camera"
+echo "  Web Viewer:  http://localhost:8081"
 echo ""
 if [ -f /etc/viam.json ]; then
-echo "  viam-server: running (use Viam app to view camera)"
-else
-echo "  Web Viewer:  http://localhost:8080"
+echo "  viam-server: running (use Viam app to configure)"
 fi
 echo ""
 echo "=========================================="

@@ -20,6 +20,8 @@ Once you see "Can Inspection Simulation Running!" in the container logs and your
 
 > **What you're working with:** The simulation runs Gazebo Harmonic inside a Docker container. It simulates a conveyor belt with cans (some dented) passing under an inspection camera. viam-server runs inside the container and connects to Viam's cloud, just like it would on a Raspberry Pi or any physical device. Everything you configure in the Viam app applies to the simulated hardware.
 
+> **Tip:** If you haven't already, open **http://localhost:8081** in your browser to see the simulation cameras. The overview camera shows the entire work cell, helping you understand what's happening as you work through the tutorial.
+
 ## 1.1 Understand viam-server
 
 Every Viam-managed device runs **viam-server**—the software that connects your hardware to Viam's cloud. viam-server is the foundation of the platform:
