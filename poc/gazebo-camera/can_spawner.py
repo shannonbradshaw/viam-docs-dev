@@ -6,9 +6,10 @@ Continuously spawns cans at the input end of the conveyor belt.
 Moves kinematic cans along the belt using position updates.
 Removes cans when they reach the output end.
 
-About 1 in 10 cans are dented (defective).
+About 50% of cans are dented (defective).
 
 Uses gz-transport Python bindings for efficient pose updates.
+Includes backoff/recovery logic when Gazebo becomes overloaded.
 """
 
 import time
@@ -28,14 +29,23 @@ SPAWN_X = -0.92  # X position where cans spawn (input end)
 DELETE_X = 1.00  # X position where cans are deleted (output end)
 BELT_Y = 0.0  # Y position (center of belt)
 BELT_Z = 0.60  # Z position (slightly above belt to drop)
-DENT_PROBABILITY = 0.1  # 10% chance of dented can
+DENT_PROBABILITY = 0.5  # 50% chance of dented can
 CHECK_INTERVAL = 0.033  # seconds between position updates (~30Hz, matches camera)
 BELT_SPEED = 0.06  # meters per second (slow, smooth movement)
+
+# Error tracking for backoff/recovery
+ERROR_THRESHOLD = 5  # consecutive failures before pausing spawns
+MAX_CANS = 20  # maximum cans on belt at once (safety limit)
 
 # Track spawned cans
 cans = {}  # name -> {'dented': bool, 'spawn_time': float, 'y_offset': float}
 can_counter = 0
 lock = threading.Lock()
+
+# Error tracking (shared between threads)
+consecutive_errors = 0
+spawning_paused = False
+error_lock = threading.Lock()
 
 # gz-transport node (initialized in main)
 node = None
@@ -99,7 +109,7 @@ def delete_can(name: str):
 
 def set_can_position(name: str, x: float, y_offset: float):
     """Set the can position using gz-transport (much faster than subprocess)."""
-    global node
+    global node, consecutive_errors, spawning_paused
 
     z = 0.54  # Height on belt
 
@@ -119,14 +129,37 @@ def set_can_position(name: str, x: float, y_offset: float):
             Boolean,
             100  # timeout in ms
         )
+
+        with error_lock:
+            if success:
+                # Reset error count on success
+                if consecutive_errors > 0:
+                    consecutive_errors = 0
+                    if spawning_paused:
+                        spawning_paused = False
+                        log("Gazebo recovered - resuming spawning")
+            else:
+                consecutive_errors += 1
+                if consecutive_errors >= ERROR_THRESHOLD and not spawning_paused:
+                    spawning_paused = True
+                    log(f"Too many errors ({consecutive_errors}) - pausing spawning")
+
         return success
     except Exception as e:
+        with error_lock:
+            consecutive_errors += 1
+            if consecutive_errors >= ERROR_THRESHOLD and not spawning_paused:
+                spawning_paused = True
+                log(f"Too many errors ({consecutive_errors}) - pausing spawning")
         return False
 
 
 def can_manager():
     """Thread that manages cans - moves them along belt and removes old ones."""
     global cans
+
+    # Stale can timeout (if a can is tracked for way too long, remove it)
+    STALE_TIMEOUT = 120.0  # 2 minutes max
 
     while True:
         current_time = time.time()
@@ -135,8 +168,15 @@ def can_manager():
             to_delete = []
 
             for name, data in list(cans.items()):
-                # Calculate position based on time since spawn (absolute, not incremental)
                 elapsed_since_spawn = current_time - data['spawn_time']
+
+                # Safety: remove stale cans from tracking (even if delete fails)
+                if elapsed_since_spawn > STALE_TIMEOUT:
+                    log(f"Removing stale can {name} from tracking")
+                    to_delete.append(name)
+                    continue
+
+                # Calculate position based on time since spawn (absolute, not incremental)
                 x_pos = SPAWN_X + (BELT_SPEED * elapsed_since_spawn)
                 set_can_position(name, x_pos, data['y_offset'])
 
@@ -146,17 +186,35 @@ def can_manager():
 
             # Delete cans that reached the end
             for name in to_delete:
-                if delete_can(name):
-                    del cans[name]
+                delete_can(name)  # Try to delete from Gazebo
+                del cans[name]   # Always remove from tracking
 
         time.sleep(CHECK_INTERVAL)
 
 
 def spawner():
     """Thread that spawns new cans periodically."""
-    global can_counter, cans
+    global can_counter, cans, spawning_paused
 
     while True:
+        # Check if spawning is paused due to errors
+        with error_lock:
+            paused = spawning_paused
+
+        # Check if we've hit the max can limit
+        with lock:
+            can_count = len(cans)
+
+        if paused:
+            # Still paused - wait and check again
+            time.sleep(SPAWN_INTERVAL)
+            continue
+
+        if can_count >= MAX_CANS:
+            # Too many cans on belt - wait for some to clear
+            time.sleep(SPAWN_INTERVAL)
+            continue
+
         # Determine if this can is dented
         dented = random.random() < DENT_PROBABILITY
 

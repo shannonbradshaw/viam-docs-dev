@@ -55,43 +55,45 @@
         </material>
       </visual>
 
-      <!-- Damage mark on top - visible from overhead camera -->
+      <!-- Damage mark on top - flat dark disk on lid surface -->
       <visual name="top_damage">
-        <pose>0.008 0.005 0.061 0 0 0</pose>
+        <pose>0.008 0.005 0.0608 0 0 0</pose>
         <geometry>
-          <ellipsoid>
-            <radii>0.012 0.008 0.002</radii>
-          </ellipsoid>
+          <cylinder>
+            <radius>0.008</radius>
+            <length>0.001</length>
+          </cylinder>
         </geometry>
         <material>
-          <ambient>0.3 0.2 0.15 1</ambient>
-          <diffuse>0.4 0.28 0.2 1</diffuse>
+          <ambient>0.2 0.2 0.22 1</ambient>
+          <diffuse>0.3 0.3 0.32 1</diffuse>
           <specular>0.2 0.2 0.2 1</specular>
           <pbr>
             <metal>
-              <metalness>0.5</metalness>
-              <roughness>0.7</roughness>
+              <metalness>0.6</metalness>
+              <roughness>0.8</roughness>
             </metal>
           </pbr>
         </material>
       </visual>
 
-      <!-- Second damage mark on top -->
+      <!-- Second damage mark - smaller dark disk -->
       <visual name="top_damage2">
-        <pose>-0.006 0.010 0.061 0 0 0.8</pose>
+        <pose>-0.005 0.012 0.0608 0 0 0</pose>
         <geometry>
-          <ellipsoid>
-            <radii>0.008 0.005 0.002</radii>
-          </ellipsoid>
+          <cylinder>
+            <radius>0.005</radius>
+            <length>0.001</length>
+          </cylinder>
         </geometry>
         <material>
-          <ambient>0.35 0.25 0.18 1</ambient>
-          <diffuse>0.45 0.32 0.22 1</diffuse>
+          <ambient>0.22 0.22 0.24 1</ambient>
+          <diffuse>0.32 0.32 0.34 1</diffuse>
           <specular>0.2 0.2 0.2 1</specular>
           <pbr>
             <metal>
-              <metalness>0.5</metalness>
-              <roughness>0.65</roughness>
+              <metalness>0.6</metalness>
+              <roughness>0.75</roughness>
             </metal>
           </pbr>
         </material>
@@ -141,43 +143,43 @@
         </material>
       </visual>
 
-      <!-- Dent - visible damage on side (dark discolored area) -->
+      <!-- Scratch/crease on side - thin dark line -->
       <visual name="dent">
-        <pose>0.028 0.012 0.015 0.2 0.3 0</pose>
+        <pose>0.0335 0 0.01 0 1.5708 0.3</pose>
         <geometry>
-          <ellipsoid>
-            <radii>0.012 0.010 0.018</radii>
-          </ellipsoid>
+          <box>
+            <size>0.025 0.003 0.001</size>
+          </box>
         </geometry>
         <material>
-          <ambient>0.25 0.25 0.28 1</ambient>
-          <diffuse>0.35 0.35 0.38 1</diffuse>
-          <specular>0.5 0.5 0.5 1</specular>
+          <ambient>0.2 0.2 0.22 1</ambient>
+          <diffuse>0.3 0.3 0.32 1</diffuse>
+          <specular>0.2 0.2 0.2 1</specular>
           <pbr>
             <metal>
-              <metalness>0.7</metalness>
-              <roughness>0.6</roughness>
+              <metalness>0.6</metalness>
+              <roughness>0.8</roughness>
             </metal>
           </pbr>
         </material>
       </visual>
 
-      <!-- Second smaller dent -->
+      <!-- Second scratch mark -->
       <visual name="dent2">
-        <pose>-0.025 0.018 -0.025 -0.1 0.4 0.2</pose>
+        <pose>-0.033 0.005 -0.02 0 1.5708 -0.2</pose>
         <geometry>
-          <ellipsoid>
-            <radii>0.008 0.007 0.012</radii>
-          </ellipsoid>
+          <box>
+            <size>0.018 0.002 0.001</size>
+          </box>
         </geometry>
         <material>
-          <ambient>0.28 0.28 0.30 1</ambient>
-          <diffuse>0.38 0.38 0.40 1</diffuse>
-          <specular>0.5 0.5 0.5 1</specular>
+          <ambient>0.22 0.22 0.24 1</ambient>
+          <diffuse>0.32 0.32 0.34 1</diffuse>
+          <specular>0.2 0.2 0.2 1</specular>
           <pbr>
             <metal>
-              <metalness>0.7</metalness>
-              <roughness>0.55</roughness>
+              <metalness>0.6</metalness>
+              <roughness>0.75</roughness>
             </metal>
           </pbr>
         </material>
