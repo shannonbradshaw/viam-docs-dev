@@ -1,12 +1,12 @@
-# Part 3: Build the Inspector (~20 min)
+# Part 3: Build the Inspector (~15 min)
 
 [← Back to Overview](./index.md) | [← Part 2: Data Capture](./part2.md)
 
 ---
 
-**Goal:** Write inspection logic that detects dented cans and rejects them from your laptop.
+**Goal:** Write inspection logic that detects dented cans and rejects them, testing from your laptop.
 
-**Skills:** Viam SDK, module-first development, CLI-based testing.
+**Skills:** Viam module generator, SDK usage, module-first development.
 
 ## What You'll Build
 
@@ -36,7 +36,7 @@ You need Go 1.21 or later. If Go isn't installed or is outdated, download it fro
 
 **Install the Viam CLI:**
 
-The Viam CLI is used for authentication and module deployment. Install it:
+The Viam CLI is used for authentication, module generation, and deployment. Install it:
 
 ```bash
 # macOS (Homebrew)
@@ -54,39 +54,68 @@ Verify it's installed:
 viam version
 ```
 
+**Log in to Viam:**
+
+```bash
+viam login
+```
+
+This stores credentials that your code will use to connect to remote machines.
+
 > **Note:** The Viam CLI (`viam`) is different from `viam-server`. The CLI runs on your development machine; `viam-server` runs on your robot/machine.
 
 ---
 
-## 3.1 Set Up Your Project
+## 3.1 Generate the Module Scaffold
 
-Create a Go project with a CLI for testing.
+The Viam CLI can generate module boilerplate for you. This gives you the correct project structure, registration code, and a CLI for testing.
+
+**Create and generate the module:**
 
 ```bash
 mkdir inspection-module && cd inspection-module
-go mod init inspection-module
-go get go.viam.com/rdk
-go get github.com/erh/vmodutils
-mkdir -p cmd/cli
+viam module generate
 ```
 
-You'll end up with this structure:
+When prompted, enter:
+- **Language:** `go`
+- **Module name:** `inspection-module`
+- **Model name:** `inspector`
+- **Resource subtype:** `generic-service`
+- **Namespace:** Your organization namespace (find it in Viam app under **Organization → Settings**)
+- **Visibility:** `private`
+- **Enable cloud build:** `no` (for simplicity during development)
+
+The generator creates this structure:
 
 ```
 inspection-module/
 ├── cmd/
-│   └── cli/main.go        # CLI for testing against remote machine
-├── inspector.go           # Your service logic
+│   ├── cli/
+│   │   └── main.go        # CLI for testing (we'll modify this)
+│   └── module/
+│       └── main.go        # Module entry point (ready to use)
+├── inspector.go           # Your service logic (we'll modify this)
+├── meta.json              # Registry metadata (ready to use)
+├── Makefile               # Build commands (ready to use)
 └── go.mod
 ```
 
-The `vmodutils` package provides helpers for connecting to remote machines using your Viam CLI credentials. This lets your local code talk to hardware running elsewhere.
+> **What the generator provides:** Model registration, module entry point, config parsing, and resource lifecycle methods. You just need to add your business logic and remote testing capability.
 
 ---
 
-## 3.2 Connect to Your Machine
+## 3.2 Add Remote Machine Connection
 
-Before writing inspection logic, verify you can connect to your machine from Go code.
+The generated CLI is a stub for local testing. We'll modify it to connect to your remote machine, enabling the fast iteration pattern: edit code locally, test against real hardware instantly.
+
+**Add the vmodutils dependency:**
+
+```bash
+go get github.com/erh/vmodutils
+```
+
+The `vmodutils` package provides helpers for connecting to remote machines using your Viam CLI credentials.
 
 **Get your machine address:**
 
@@ -96,222 +125,26 @@ Before writing inspection logic, verify you can connect to your machine from Go 
 
 [SCREENSHOT: Code sample tab showing machine address]
 
-**Authenticate the CLI:**
+**Modify the generated CLI:**
 
-The CLI uses your Viam CLI token for authentication. Make sure you're logged in:
-
-```bash
-viam login
-```
-
-This stores a token that `vmodutils` uses automatically.
-
-**Create the CLI:**
-
-Create `cmd/cli/main.go`:
+Open `cmd/cli/main.go`. The generator created something like this:
 
 ```go
-package main
-
-import (
-	"context"
-	"flag"
-	"fmt"
-
-	"github.com/erh/vmodutils"
-	"go.viam.com/rdk/logging"
-)
-
-// main wraps realMain so we can use error returns instead of log.Fatal.
-// This pattern makes deferred cleanup (like machine.Close) work properly on errors.
-func main() {
-	if err := realMain(); err != nil {
-		panic(err)
-	}
-}
-
 func realMain() error {
-	// Context carries cancellation signals and deadlines through the call chain
 	ctx := context.Background()
-	// Logger provides structured logging with levels (Info, Error, Debug)
 	logger := logging.NewLogger("cli")
 
-	// Parse command-line flags
-	host := flag.String("host", "", "Machine address")
-	flag.Parse()
+	deps := resource.Dependencies{}
+	// can load these from a remote machine if you need
 
-	if *host == "" {
-		return fmt.Errorf("need -host flag")
-	}
+	cfg := inspector.Config{}
 
-	// Connect to the remote machine using credentials from `viam login`
-	machine, err := vmodutils.ConnectToHostFromCLIToken(ctx, *host, logger)
-	if err != nil {
-		return fmt.Errorf("failed to connect: %w", err)
-	}
-	defer machine.Close(ctx) // Always close the connection when done
-
-	// List available resources to verify connection works
-	logger.Info("Connected! Available resources:")
-	for _, name := range machine.ResourceNames() {
-		logger.Infof("  %s", name)
-	}
-
-	return nil
+	thing, err := inspector.NewInspector(ctx, deps, generic.Named("foo"), &cfg, logger)
+	// ...
 }
 ```
 
-**Test the connection:**
-
-```bash
-go run ./cmd/cli -host your-machine-main.abc123.viam.cloud
-```
-
-You should see output listing your machine's resources:
-
-```
-Connected! Available resources:
-  rdk:component:camera/inspection-cam
-  rdk:service:vision/can-detector
-  ...
-```
-
-> **What just happened:** Your laptop connected to the machine running in Docker (or on physical hardware) over the network. The `vmodutils.ConnectToHostFromCLIToken` function reads your Viam CLI credentials and establishes a secure connection. You now have a `machine` object that can access any component or service on that machine.
-
-**Checkpoint:** If you see your resources listed, you're ready to write inspection logic.
-
-<details>
-<summary><strong>Troubleshooting: Connection failures</strong></summary>
-
-**"failed to connect" or timeout errors:**
-- Verify your machine is online in the Viam app (green dot next to machine name)
-- Check that you've run `viam login` and authenticated successfully
-- Confirm the host address is correct (copy it fresh from the Code sample tab)
-
-**"unauthorized" or "invalid credentials" errors:**
-- Run `viam logout` then `viam login` to refresh your credentials
-- Ensure you're logged into the correct Viam organization
-
-**No resources listed:**
-- The machine is connected but may not have components configured yet
-- Go back to Part 1 and verify the camera and vision service are configured
-
-</details>
-
----
-
-## 3.3 Build the Inspector
-
-Now write code that calls the vision service to detect cans.
-
-We'll call this `Inspector` from the start—even though it only does detection for now. By the end of Part 3, it will also reject defective cans. Naming it `Inspector` now avoids renaming later and reflects what we're building toward.
-
-**Create the config:**
-
-Create `inspector.go` and start with a configuration struct:
-
-```go
-package inspector
-
-import (
-	"context"
-	"fmt"
-
-	"go.viam.com/rdk/logging"
-	"go.viam.com/rdk/resource"
-	"go.viam.com/rdk/services/vision"
-)
-
-// Config declares which dependencies the inspector needs.
-// Each field names a resource that must exist on the machine.
-// When deployed as a module, these come from the JSON config.
-// When testing via CLI, we set them directly in code.
-type Config struct {
-	Camera        string `json:"camera"`         // Name of the camera component
-	VisionService string `json:"vision_service"` // Name of the vision service
-}
-
-// Validate checks that required fields are present and returns dependency names.
-// Viam calls this during configuration to:
-// 1. Catch config errors early (before trying to start the service)
-// 2. Know which resources to inject into the constructor
-func (cfg *Config) Validate(path string) ([]string, error) {
-	if cfg.Camera == "" {
-		return nil, fmt.Errorf("camera is required")
-	}
-	if cfg.VisionService == "" {
-		return nil, fmt.Errorf("vision_service is required")
-	}
-	// Return dependency names so Viam's dependency injection provides them
-	return []string{cfg.Camera, cfg.VisionService}, nil
-}
-```
-
-**Add the Inspector struct and constructor:**
-
-```go
-// Inspector handles detection and (eventually) rejection of defective cans.
-// For now it only does detection; we'll add rejection in section 3.5.
-type Inspector struct {
-	conf     *Config
-	logger   logging.Logger
-	detector vision.Service
-}
-
-// NewInspector creates an inspector from a dependencies map.
-// This same constructor works whether called from CLI or module.
-func NewInspector(deps resource.Dependencies, conf *Config, logger logging.Logger) (*Inspector, error) {
-	// Extract the vision service from dependencies by name.
-	// FromDependencies looks up the resource and returns it as the correct type.
-	// If the resource doesn't exist or isn't a vision service, it returns an error.
-	detector, err := vision.FromDependencies(deps, conf.VisionService)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get vision service %q: %w", conf.VisionService, err)
-	}
-
-	return &Inspector{
-		conf:     conf,
-		logger:   logger,
-		detector: detector,
-	}, nil
-}
-```
-
-**Add the Detect method:**
-
-```go
-// Detect runs the vision service and returns the best detection.
-// Returns: label (e.g., "PASS" or "FAIL"), confidence (0.0-1.0), error
-func (i *Inspector) Detect(ctx context.Context) (string, float64, error) {
-	// Call vision service, passing camera name so it knows which camera to use.
-	// One vision service can work with multiple cameras.
-	// The third argument (nil) is for extra parameters we don't need.
-	detections, err := i.detector.DetectionsFromCamera(ctx, i.conf.Camera, nil)
-	if err != nil {
-		return "", 0, err
-	}
-
-	// Handle case where nothing was detected
-	if len(detections) == 0 {
-		return "NO_DETECTION", 0, nil
-	}
-
-	// Find the detection with highest confidence score.
-	// When multiple objects are detected, we care about the most confident one.
-	best := detections[0]
-	for _, det := range detections[1:] {
-		if det.Score() > best.Score() {
-			best = det
-		}
-	}
-
-	return best.Label(), best.Score(), nil
-}
-```
-
-**Update the CLI to test detection:**
-
-Replace the contents of `cmd/cli/main.go`:
+Replace the entire file with:
 
 ```go
 package main
@@ -323,6 +156,7 @@ import (
 
 	"github.com/erh/vmodutils"
 	"go.viam.com/rdk/logging"
+	"go.viam.com/rdk/services/generic"
 
 	inspector "inspection-module"
 )
@@ -337,11 +171,13 @@ func realMain() error {
 	ctx := context.Background()
 	logger := logging.NewLogger("cli")
 
-	host := flag.String("host", "", "Machine address")
+	// Parse command-line flags
+	host := flag.String("host", "", "Machine address (required)")
+	cmd := flag.String("cmd", "detect", "Command: detect or inspect")
 	flag.Parse()
 
 	if *host == "" {
-		return fmt.Errorf("need -host flag")
+		return fmt.Errorf("need -host flag (get address from Viam app → Code sample)")
 	}
 
 	// Configuration specifying which resources to use.
@@ -351,10 +187,12 @@ func realMain() error {
 		VisionService: "can-detector",
 	}
 
-	if _, err := conf.Validate(""); err != nil {
+	if _, _, err := conf.Validate(""); err != nil {
 		return err
 	}
 
+	// Connect to the remote machine using credentials from `viam login`
+	logger.Infof("Connecting to %s...", *host)
 	machine, err := vmodutils.ConnectToHostFromCLIToken(ctx, *host, logger)
 	if err != nil {
 		return fmt.Errorf("failed to connect: %w", err)
@@ -362,67 +200,202 @@ func realMain() error {
 	defer machine.Close(ctx)
 
 	// Convert machine resources to a Dependencies map.
-	// This gives us the same format the module system uses,
-	// so our constructor works identically in both contexts.
+	// This gives us the same format the module system uses.
 	deps, err := vmodutils.MachineToDependencies(machine)
 	if err != nil {
 		return fmt.Errorf("failed to get dependencies: %w", err)
 	}
 
 	// Create the inspector using the same constructor the module will use
-	insp, err := inspector.NewInspector(deps, conf, logger)
+	insp, err := inspector.NewInspector(ctx, deps, generic.Named("inspector"), conf, logger)
 	if err != nil {
 		return err
 	}
+	defer insp.Close(ctx)
 
-	// Run detection
-	label, confidence, err := insp.Detect(ctx)
-	if err != nil {
-		return fmt.Errorf("detection failed: %w", err)
+	// Run the requested command
+	switch *cmd {
+	case "detect":
+		label, confidence, err := insp.Detect(ctx)
+		if err != nil {
+			return err
+		}
+		logger.Infof("Detection: %s (%.1f%% confidence)", label, confidence*100)
+
+	default:
+		return fmt.Errorf("unknown command: %s (use 'detect')", *cmd)
 	}
 
-	logger.Infof("Detection: %s (%.1f%% confidence)", label, confidence*100)
 	return nil
 }
 ```
 
-**Fetch dependencies and test:**
+**Key changes from the generated stub:**
+- Added `flag` package for `-host` and `-cmd` arguments
+- Added `vmodutils` import for remote connection
+- Replaced empty `deps := resource.Dependencies{}` with actual remote connection
+- Added command dispatch (we'll add more commands later)
+
+---
+
+## 3.3 Add Detection Logic
+
+Now modify the generated service to implement detection. The generator created `inspector.go` with stub methods. We'll fill them in.
+
+**Update the Config struct:**
+
+Find the `Config` struct in `inspector.go` and update it:
+
+```go
+// Config declares which dependencies the inspector needs.
+type Config struct {
+	Camera        string `json:"camera"`
+	VisionService string `json:"vision_service"`
+}
+
+// Validate checks that required fields are present and returns dependency names.
+func (cfg *Config) Validate(path string) ([]string, []string, error) {
+	if cfg.Camera == "" {
+		return nil, nil, fmt.Errorf("camera is required")
+	}
+	if cfg.VisionService == "" {
+		return nil, nil, fmt.Errorf("vision_service is required")
+	}
+	// Return dependency names so Viam's dependency injection provides them
+	return []string{cfg.Camera, cfg.VisionService}, nil, nil
+}
+```
+
+**Update the imports:**
+
+Make sure your imports include:
+
+```go
+import (
+	"context"
+	"fmt"
+
+	"go.viam.com/rdk/logging"
+	"go.viam.com/rdk/resource"
+	"go.viam.com/rdk/services/generic"
+	"go.viam.com/rdk/services/vision"
+)
+```
+
+**Update the Inspector struct:**
+
+Find the struct (the generator may have named it differently) and ensure it has:
+
+```go
+type Inspector struct {
+	resource.AlwaysRebuild
+
+	name     resource.Name
+	conf     *Config
+	logger   logging.Logger
+	detector vision.Service
+}
+```
+
+**Update the constructor:**
+
+The generator created two constructors—one for the module (`newInspector`) and one public (`NewInspector`). Update `NewInspector`:
+
+```go
+func NewInspector(
+	ctx context.Context,
+	deps resource.Dependencies,
+	name resource.Name,
+	conf *Config,
+	logger logging.Logger,
+) (*Inspector, error) {
+	// Extract the vision service from dependencies by name
+	detector, err := vision.FromDependencies(deps, conf.VisionService)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get vision service %q: %w", conf.VisionService, err)
+	}
+
+	return &Inspector{
+		name:     name,
+		conf:     conf,
+		logger:   logger,
+		detector: detector,
+	}, nil
+}
+```
+
+Also update the module's internal constructor to call it:
+
+```go
+func newInspector(ctx context.Context, deps resource.Dependencies, rawConf resource.Config, logger logging.Logger) (resource.Resource, error) {
+	conf, err := resource.NativeConfig[*Config](rawConf)
+	if err != nil {
+		return nil, err
+	}
+	return NewInspector(ctx, deps, rawConf.ResourceName(), conf, logger)
+}
+```
+
+**Add the Detect method:**
+
+```go
+// Detect runs the vision service and returns the best detection.
+func (i *Inspector) Detect(ctx context.Context) (string, float64, error) {
+	// Call vision service, passing camera name
+	detections, err := i.detector.DetectionsFromCamera(ctx, i.conf.Camera, nil)
+	if err != nil {
+		return "", 0, err
+	}
+
+	if len(detections) == 0 {
+		return "NO_DETECTION", 0, nil
+	}
+
+	// Find the detection with highest confidence
+	best := detections[0]
+	for _, det := range detections[1:] {
+		if det.Score() > best.Score() {
+			best = det
+		}
+	}
+
+	return best.Label(), best.Score(), nil
+}
+```
+
+**Test the connection and detection:**
 
 ```bash
 go mod tidy
 go run ./cmd/cli -host your-machine-main.abc123.viam.cloud
 ```
 
-You should see output like:
+You should see:
 
 ```
+Connecting to your-machine-main.abc123.viam.cloud...
 Detection: PASS (94.2% confidence)
 ```
 
-or
+Run it several times—results change as different cans pass under the camera.
 
-```
-Detection: FAIL (87.3% confidence)
-```
-
-Run it several times—you'll see different results as different cans pass under the camera.
-
-> **What just happened:** Your laptop called the vision service running on the remote machine. The vision service grabbed an image from the camera, ran it through the ML model, and returned detection results. You're running ML inference on remote hardware from local code.
+> **What just happened:** Your laptop connected to the remote machine, called the vision service, and got ML inference results. The code runs locally but uses remote hardware.
 
 <details>
-<summary><strong>Troubleshooting: Detection failures</strong></summary>
+<summary><strong>Troubleshooting: Connection or detection failures</strong></summary>
+
+**"failed to connect" or timeout errors:**
+- Verify your machine is online in the Viam app (green dot)
+- Check that you've run `viam login` successfully
+- Confirm the host address is correct (copy fresh from Code sample tab)
 
 **"failed to get vision service" error:**
-- Verify `can-detector` exists in your machine config (Part 1, section 1.6)
+- Verify `can-detector` exists in your machine config (Part 1)
 - Check the exact name matches—it's case-sensitive
 
 **"NO_DETECTION" result:**
-- This is normal if no can is in view—wait for one to appear
+- Normal if no can is in view—wait for one to appear
 - Check the camera is working in the Viam app's Test panel
-
-**Import errors or "package not found":**
-- Run `go mod tidy` to fetch missing dependencies
-- Ensure you're in the `inspection-module` directory
 
 </details>
 
@@ -430,11 +403,7 @@ Run it several times—you'll see different results as different cans pass under
 
 ### Milestone 1: Detection Working
 
-You can now detect cans from your laptop. Run the CLI a few times and watch the results change as different cans pass under the camera.
-
-**What you have:** A working detector that calls remote ML inference from local code.
-
-**What's next:** Add the ability to reject defective cans.
+You can now detect cans from your laptop. Run the CLI a few times and watch results change as cans pass under the camera.
 
 ---
 
@@ -447,12 +416,12 @@ Before writing rejection code, add the rejector hardware to your machine.
 1. In the Viam app, go to your machine's **Configure** tab
 2. Click **+** next to your machine in the left sidebar
 3. Select **Component**, then **motor**
-4. For **Model**, select `fake` (this creates a simulated motor for testing)
+4. For **Model**, select `fake` (simulated motor for testing)
 5. Name it `rejector`
 6. Click **Create**
-7. Click **Save** in the top right
+7. Click **Save**
 
-> **Note:** In a real deployment, you'd use an actual motor model (like `gpio`) with pin configuration. The `fake` model lets us test the control logic without physical hardware.
+> **Note:** In production, you'd use an actual motor model (like `gpio`) with pin configuration. The `fake` model lets us test control logic without physical hardware.
 
 **Test it in the Viam app:**
 
@@ -470,81 +439,82 @@ Now extend the inspector to trigger the rejector when a defective can is detecte
 
 **Update the imports in `inspector.go`:**
 
-Add the motor import:
-
 ```go
 import (
 	"context"
 	"fmt"
 
-	"go.viam.com/rdk/components/motor" // Add this
+	"go.viam.com/rdk/components/motor"  // Add this
 	"go.viam.com/rdk/logging"
 	"go.viam.com/rdk/resource"
+	"go.viam.com/rdk/services/generic"
 	"go.viam.com/rdk/services/vision"
 )
 ```
 
-**Add the Rejector field to Config:**
+**Add Rejector to Config:**
 
 ```go
 type Config struct {
 	Camera        string `json:"camera"`
 	VisionService string `json:"vision_service"`
-	Rejector      string `json:"rejector"` // Add this
+	Rejector      string `json:"rejector"`
 }
-```
 
-**Update Validate to include the rejector:**
-
-Add the rejector validation check and include `cfg.Rejector` in the returned dependencies:
-
-```go
-func (cfg *Config) Validate(path string) ([]string, error) {
+func (cfg *Config) Validate(path string) ([]string, []string, error) {
 	if cfg.Camera == "" {
-		return nil, fmt.Errorf("camera is required")
+		return nil, nil, fmt.Errorf("camera is required")
 	}
 	if cfg.VisionService == "" {
-		return nil, fmt.Errorf("vision_service is required")
+		return nil, nil, fmt.Errorf("vision_service is required")
 	}
-	if cfg.Rejector == "" {                                          // NEW
-		return nil, fmt.Errorf("rejector is required")               // NEW
-	}                                                                // NEW
-	return []string{cfg.Camera, cfg.VisionService, cfg.Rejector}, nil  // CHANGED: added cfg.Rejector
+	if cfg.Rejector == "" {
+		return nil, nil, fmt.Errorf("rejector is required")
+	}
+	return []string{cfg.Camera, cfg.VisionService, cfg.Rejector}, nil, nil
 }
 ```
 
-**Add the rejector field to Inspector:**
+**Add rejector to Inspector struct:**
 
 ```go
 type Inspector struct {
+	resource.AlwaysRebuild
+
+	name     resource.Name
 	conf     *Config
 	logger   logging.Logger
 	detector vision.Service
-	rejector motor.Motor // Add this
+	rejector motor.Motor  // Add this
 }
 ```
 
-**Update NewInspector to get the rejector:**
-
-Add the rejector lookup after getting the detector, and include it in the returned struct:
+**Update the constructor:**
 
 ```go
-func NewInspector(deps resource.Dependencies, conf *Config, logger logging.Logger) (*Inspector, error) {
+func NewInspector(
+	ctx context.Context,
+	deps resource.Dependencies,
+	name resource.Name,
+	conf *Config,
+	logger logging.Logger,
+) (*Inspector, error) {
 	detector, err := vision.FromDependencies(deps, conf.VisionService)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get vision service %q: %w", conf.VisionService, err)
 	}
 
-	rejector, err := motor.FromDependencies(deps, conf.Rejector)  // NEW
-	if err != nil {                                                // NEW
-		return nil, fmt.Errorf("failed to get rejector %q: %w", conf.Rejector, err)  // NEW
-	}                                                              // NEW
+	rejector, err := motor.FromDependencies(deps, conf.Rejector)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get rejector %q: %w", conf.Rejector, err)
+	}
 
 	return &Inspector{
+		name:     name,
 		conf:     conf,
 		logger:   logger,
 		detector: detector,
-		rejector: rejector,  // NEW
+		rejector: rejector,
 	}, nil
 }
 ```
@@ -552,12 +522,8 @@ func NewInspector(deps resource.Dependencies, conf *Config, logger logging.Logge
 **Add the reject and Inspect methods:**
 
 ```go
-// reject activates the rejector motor to push a defective can off the belt.
+// reject activates the rejector motor
 func (i *Inspector) reject(ctx context.Context) error {
-	// GoFor runs the motor at a given speed for a given number of revolutions.
-	// Arguments: rpm (speed), revolutions (distance), extra (nil = no extra params)
-	// Tune these values based on your actuator - a pneumatic pusher might use
-	// different parameters than a servo arm.
 	if err := i.rejector.GoFor(ctx, 100, 1, nil); err != nil {
 		return err
 	}
@@ -565,24 +531,18 @@ func (i *Inspector) reject(ctx context.Context) error {
 	return nil
 }
 
-// Inspect runs detection and rejects defective cans.
-// Returns: label, confidence, whether the can was rejected, error
+// Inspect runs detection and rejects defective cans
 func (i *Inspector) Inspect(ctx context.Context) (string, float64, bool, error) {
 	label, confidence, err := i.Detect(ctx)
 	if err != nil {
 		return "", 0, false, err
 	}
 
-	// Decide whether to reject based on label and confidence.
-	// The 0.7 threshold avoids rejecting on uncertain detections.
-	// Lower values: catch more defects, risk more false positives
-	// Higher values: fewer false positives, might miss some defects
-	// Tune based on cost of each error type in your application.
+	// Reject if FAIL with sufficient confidence
 	shouldReject := label == "FAIL" && confidence > 0.7
 
 	if shouldReject {
 		if err := i.reject(ctx); err != nil {
-			// Log but don't fail - we still want to return the detection result
 			i.logger.Errorw("Failed to reject", "error", err)
 		}
 	}
@@ -591,39 +551,28 @@ func (i *Inspector) Inspect(ctx context.Context) (string, float64, bool, error) 
 }
 ```
 
-**Update the CLI to support both commands:**
+**Update the CLI config and add the inspect command:**
 
-Add the `-cmd` flag and update the config and command handling. In `cmd/cli/main.go`:
-
-Add the flag after the `host` flag:
-
-```go
-host := flag.String("host", "", "Machine address")
-cmd := flag.String("cmd", "detect", "Command: detect or inspect") // Add this
-flag.Parse()
-```
-
-Add `Rejector` to the config:
+In `cmd/cli/main.go`, update the config:
 
 ```go
 conf := &inspector.Config{
 	Camera:        "inspection-cam",
 	VisionService: "can-detector",
-	Rejector:      "rejector", // Add this
+	Rejector:      "rejector",
 }
 ```
 
-Replace the detection code at the end of `realMain()` (the four lines from `label, confidence, err := insp.Detect(ctx)` through `logger.Infof(...)`) with this switch:
+Update the command switch:
 
 ```go
-// Handle the requested command
 switch *cmd {
 case "detect":
 	label, confidence, err := insp.Detect(ctx)
 	if err != nil {
 		return err
 	}
-	logger.Infof("Detection: %s (%.1f%%)", label, confidence*100)
+	logger.Infof("Detection: %s (%.1f%% confidence)", label, confidence*100)
 
 case "inspect":
 	label, confidence, rejected, err := insp.Inspect(ctx)
@@ -635,8 +584,6 @@ case "inspect":
 default:
 	return fmt.Errorf("unknown command: %s (use 'detect' or 'inspect')", *cmd)
 }
-
-return nil
 ```
 
 **Test both commands:**
@@ -649,46 +596,17 @@ go run ./cmd/cli -host your-machine-main.abc123.viam.cloud -cmd detect
 go run ./cmd/cli -host your-machine-main.abc123.viam.cloud -cmd inspect
 ```
 
-With a good can:
-```
-Inspection: PASS (94.2%), rejected=false
-```
-
 With a dented can:
 ```
 Inspection: FAIL (87.3%), rejected=true
 Defective can rejected
 ```
 
-> **What just happened:** You closed the control loop. Your code detects a defect, decides to reject based on confidence threshold, and actuates the motor. This is the sense-think-act cycle running from your laptop against remote hardware.
-
-<details>
-<summary><strong>Troubleshooting: Rejection failures</strong></summary>
-
-**"failed to get rejector" error:**
-- Verify the `rejector` motor exists in your machine config (section 3.4)
-- Check the name matches exactly—it's case-sensitive
-
-**Motor doesn't respond:**
-- Test the motor in the Viam app's Test panel first
-- For real hardware: check wiring and motor driver configuration
-- For `fake` motor: this is expected—it simulates motion without physical output
-
-**"rejected=true" but no physical action:**
-- If using the `fake` motor model, this is expected behavior
-- The fake motor accepts commands but doesn't control real hardware
-
-</details>
-
 ---
 
 ### Milestone 2: Full Inspection Loop Working
 
-You now have a complete inspect-and-reject system running from your laptop. The CLI connects to your remote machine, runs ML inference, makes a decision, and triggers actuation—all over the network.
-
-**What you have:** Working inspection logic that you can iterate on quickly (edit code, run CLI, see results).
-
-**What's next:** Package this as a module so it runs on the machine itself, not your laptop.
+You now have a complete inspect-and-reject system running from your laptop against remote hardware.
 
 ---
 
@@ -696,13 +614,14 @@ You now have a complete inspect-and-reject system running from your laptop. The 
 
 You built inspection logic using the module-first development pattern:
 
-1. **Connected** to the remote machine from local code
-2. **Built detection** — called vision service, processed results
-3. **Added rejection** — triggered motor based on detection confidence
+1. **Generated** the module scaffold with `viam module generate`
+2. **Modified** the CLI to connect to remote machines with vmodutils
+3. **Added detection** — called vision service, processed results
+4. **Added rejection** — triggered motor based on detection confidence
 
-**The key insight:** You can develop and test against real (or simulated) hardware without deploying anything. Edit code locally, run the CLI, see results immediately. This is much faster than the traditional deploy-test-debug cycle.
+**The key insight:** Edit code locally, run the CLI, see results on real hardware instantly. No deploy cycle during development.
 
-**Your code is ready.** In Part 4, you'll package it as a module and deploy it to the machine so it runs autonomously.
+**Your code is ready.** In Part 4, you'll add the DoCommand interface and deploy it to run on the machine autonomously.
 
 ---
 

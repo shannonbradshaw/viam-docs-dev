@@ -2,7 +2,7 @@
 
 **Status:** 🟡 Draft | [View TODOs](./todo.md)
 
-**Time:** ~90 minutes
+**Time:** ~75 minutes
 **Components:** Camera + Compute
 **Physics required:** None (rendered images only)
 
@@ -80,8 +80,8 @@ A working inspection system with:
 |------|------|----------------|
 | [Part 1: Vision Pipeline](./part1.md) | ~15 min | Set up camera, ML model, and vision service |
 | [Part 2: Data Capture](./part2.md) | ~15 min | Configure automatic data sync and alerts |
-| [Part 3: Build the Inspector](./part3.md) | ~20 min | Write inspection logic in Go, test from CLI |
-| [Part 4: Deploy as a Module](./part4.md) | ~20 min | Package and deploy to run on the machine |
+| [Part 3: Build the Inspector](./part3.md) | ~15 min | Generate module, write inspection logic, test from CLI |
+| [Part 4: Deploy as a Module](./part4.md) | ~10 min | Add DoCommand, package and deploy |
 | [Part 5: Scale](./part5.md) | ~10 min | Create fragment, add second machine |
 | [Part 6: Productize](./part6.md) | ~10 min | Build dashboard, white-label auth |
 
@@ -102,20 +102,19 @@ A working inspection system with:
 - [2.3 View and Query Data](./part2.md#23-view-and-query-data)
 - [2.4 Summary](./part2.md#24-summary)
 
-**[Part 3: Build the Inspector](./part3.md)** (~20 min)
-- [3.1 Set Up Your Project](./part3.md#31-set-up-your-project)
-- [3.2 Connect to Your Machine](./part3.md#32-connect-to-your-machine)
-- [3.3 Build the Inspector](./part3.md#33-build-the-inspector)
+**[Part 3: Build the Inspector](./part3.md)** (~15 min)
+- [3.1 Generate the Module Scaffold](./part3.md#31-generate-the-module-scaffold)
+- [3.2 Add Remote Machine Connection](./part3.md#32-add-remote-machine-connection)
+- [3.3 Add Detection Logic](./part3.md#33-add-detection-logic)
 - [3.4 Configure the Rejector](./part3.md#34-configure-the-rejector)
 - [3.5 Add Rejection Logic](./part3.md#35-add-rejection-logic)
 - [3.6 Summary](./part3.md#36-summary)
 
-**[Part 4: Deploy as a Module](./part4.md)** (~20 min)
+**[Part 4: Deploy as a Module](./part4.md)** (~10 min)
 - [4.1 Add the DoCommand Interface](./part4.md#41-add-the-docommand-interface)
-- [4.2 Structure as a Viam Resource](./part4.md#42-structure-as-a-viam-resource)
-- [4.3 Add Module Registration](./part4.md#43-add-module-registration)
-- [4.4 Deploy to the Machine](./part4.md#44-deploy-to-the-machine)
-- [4.5 Summary](./part4.md#45-summary)
+- [4.2 Review the Generated Module Structure](./part4.md#42-review-the-generated-module-structure)
+- [4.3 Build and Deploy](./part4.md#43-build-and-deploy)
+- [4.4 Summary](./part4.md#44-summary)
 
 **[Part 5: Scale](./part5.md)** (~10 min)
 - [5.1 Create a Fragment](./part5.md#51-create-a-fragment)

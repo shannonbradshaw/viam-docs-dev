@@ -65,6 +65,9 @@
 - [x] **Part 3 prerequisites** - Added Go version check and Viam CLI installation instructions
 - [x] **Part 3 troubleshooting** - Added collapsible troubleshooting sections for common errors
 - [x] **Part 3 screenshot placeholders** - Added placeholders for Code sample tab and motor test panel
+- [x] **Use viam module generate** - Part 3 now starts with generator, then modifies CLI for vmodutils pattern
+- [x] **Shorten Part 4** - Reduced from ~20 min to ~10 min by leveraging generator output
+- [x] **viam-chess pattern** - Both parts now follow the local-service-with-remote-deps development pattern
 
 ---
 
@@ -84,12 +87,12 @@ Index will link to both with clear labels. This keeps each version focused and r
 |------|-------|------|-------|
 | 1 | Vision Pipeline | ~15 min | Camera, ML model, vision service |
 | 2 | Data Capture | ~15 min | Capture, sync, alerts |
-| 3 | Build the Inspector | ~20 min | Detection + rejection logic, CLI testing |
-| 4 | Deploy as a Module | ~20 min | DoCommand, resource interface, deployment |
+| 3 | Build the Inspector | ~15 min | Generate module, detection + rejection logic, CLI testing |
+| 4 | Deploy as a Module | ~10 min | DoCommand, deployment |
 | 5 | Scale | ~10 min | Fragments, fleet management |
 | 6 | Productize | ~10 min | Dashboard, white-label auth |
 
-Total: ~90 min
+Total: ~75 min
 
 ### Simulation Limitations
 
