@@ -2,19 +2,27 @@
 
 **Status:** Draft
 
-When you have one robot, configuration is simple: you set it up, it works, you move on. When you have ten robots—or a hundred—configuration becomes a problem. How do you keep them consistent? How do you update them all? What happens when one machine needs slightly different settings?
+Robot configuration can be complex. A machine's setup includes hardware definitions, service configurations, network settings, calibration values, and more. 
 
-Fragments solve these problems. A fragment is a reusable block of machine configuration that you define once and deploy to any number of machines. Update the fragment, and every machine using it receives the change. Need per-machine differences? Override specific values without duplicating the entire configuration.
+Fragments let you capture configuration once and reuse it. A fragment is a reusable block of machine configuration. You can use fragments others have created—from the Viam Registry or your organization—to configure common hardware without starting from scratch. You can create your own fragments to share configuration across machines. And when a fragment updates, every machine using it receives the change automatically.
 
 This document explains what fragments enable and when to use them. For step-by-step instructions on creating and managing fragments, see the Build guides linked at the end.
 
 ---
 
-## The Problem Fragments Solve
+## The Problems Fragments Solve
 
-Robot configuration is more complex than typical software configuration. A machine's config includes hardware definitions (motors, cameras, sensors), service configurations (vision pipelines, data capture rules), network settings, calibration values, and more. This configuration determines how the machine behaves in the physical world.
+### For Any Machine: Leverage Existing Work
 
-At small scale, this complexity is manageable. You configure one machine, test it, and deploy it. But problems emerge as you scale:
+Configuring a machine from scratch means understanding every component, every parameter, every interaction. Much of this work has been done before—by Viam, by hardware vendors, by the community.
+
+**Avoid reinventing configuration.** Without reusable configurations, you set up common hardware patterns from scratch every time. Someone has already figured out the right settings for that camera, that sensor, that data pipeline. Fragments let you use their work.
+
+**Stay current.** Hardware configurations evolve. Better defaults emerge. Bugs get fixed. If you configure everything manually, you track and apply these improvements yourself. With fragments, updates flow to you automatically.
+
+### For Fleets: Maintain Consistency at Scale
+
+As you move from one machine to many, new problems emerge:
 
 **Configuration drift.** When you configure machines individually, small differences creep in over time. One machine gets a fix that others don't. Settings diverge. Debugging becomes harder because you can't assume machines are configured the same way.
 
@@ -24,11 +32,22 @@ At small scale, this complexity is manageable. You configure one machine, test i
 
 **Provisioning at scale.** Setting up each new machine from scratch doesn't scale. You need a way to stamp out machines with known-good configurations quickly and reliably.
 
-Fragments address all of these problems by establishing a single source of truth for machine configuration.
+Fragments address these problems—for single machines and fleets alike—by providing reusable, maintainable sources of configuration.
 
 ---
 
 ## Core Capabilities
+
+### Use What Others Have Built
+
+The Viam Registry contains fragments for common hardware and configurations. Your organization may have fragments for internal standards. Before configuring from scratch, check what's already available.
+
+Using an existing fragment gives you:
+- **Tested configuration.** Someone has already debugged the settings.
+- **Automatic updates.** When the fragment improves, your machine benefits.
+- **Faster setup.** Add the fragment, provide any required variables, and you're done.
+
+This applies whether you have one machine or a hundred. A single prototype benefits from a well-maintained camera fragment just as much as a production fleet does.
 
 ### Define Once, Deploy Everywhere
 
@@ -123,7 +142,9 @@ A fragment designed for zero-touch device setup. Combined with Viam's provisioni
 
 Fragments make sense when:
 
-- **You have two or more machines with shared configuration.** Even at small scale, fragments prevent drift and simplify updates.
+- **A fragment already exists for your hardware or use case.** Check the Viam Registry and your organization's fragments before configuring from scratch—even for a single machine.
+
+- **You have two or more machines with shared configuration.** Fragments prevent drift and simplify updates across machines.
 
 - **You need to update multiple machines simultaneously.** Changing a fragment is faster and safer than updating machines individually.
 
@@ -133,21 +154,21 @@ Fragments make sense when:
 
 ### Not a Fit
 
-Fragments may not be the right tool when:
+Creating your own fragment may not be worth it when:
 
-- **You have a single prototype machine.** Just configure it directly. You can extract a fragment later if you need to replicate it.
+- **You have a single machine with unique configuration.** If no existing fragment applies and you won't replicate this machine, direct configuration is simpler. You can always extract a fragment later.
 
 - **Your machines have fundamentally different architectures.** If machines share little configuration, separate fragments (or direct configuration) may be clearer than heavily overwritten fragments.
 
 - **Configuration changes more often than it's shared.** If every machine needs constant, unique adjustments, the overhead of fragment management may not pay off.
 
-### The "When Does One Become Many?" Question
+### When to Create Your Own Fragment
 
-A common question: when should you create your first fragment?
+You might *use* fragments from day one—applying existing fragments from the registry or your organization. But when should you *create* your own?
 
 The practical answer: when you're about to configure a second machine that resembles the first. Before you copy-paste configuration, extract it into a fragment. This takes minutes and immediately prevents the drift that copy-paste introduces.
 
-You don't need to plan for fragments from the start. Configure your first machine directly. Get it working. When you need a second machine, that's when you create the fragment from the working configuration.
+You don't need to plan for custom fragments from the start. Use existing fragments where they fit. Configure unique aspects directly. When you need to replicate a configuration, that's when you create your own fragment.
 
 ---
 
