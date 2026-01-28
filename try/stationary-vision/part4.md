@@ -186,6 +186,31 @@ make
 # Or manually: go build -o bin/inspection-module ./cmd/module
 ```
 
+### What if I'm using a Mac?
+
+If you're developing on a Mac but deploying to a Linux machine (like a Raspberry Pi), you need to **cross-compile**—build a Linux binary on macOS. This requires disabling CGO and explicitly setting the target OS and architecture.
+
+**Add a convenience target to your `Makefile`:**
+
+```makefile
+# Convenience target for building Linux ARM64 (e.g., Raspberry Pi)
+linux-arm64:
+	CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -tags no_cgo -o $(MODULE_BINARY) cmd/module/main.go
+```
+
+Now instead of running `make`, run:
+
+```bash
+make linux-arm64
+```
+
+This builds a Linux ARM64 binary that runs on your Pi. Use this target anywhere the tutorial says to run `make`.
+
+> **Why these flags?**
+> - `CGO_ENABLED=0` — disables C dependencies (which can't cross-compile)
+> - `GOOS=linux GOARCH=arm64` — targets Linux on ARM64
+> - `-tags no_cgo` — uses pure Go implementations of any C-dependent packages
+
 **Package for upload:**
 
 ```bash
