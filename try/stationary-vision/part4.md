@@ -220,7 +220,7 @@ tar czf module.tar.gz meta.json bin/
 **Upload to the registry:**
 
 ```bash
-viam module upload --version 1.0.0 --platform linux/amd64 module.tar.gz
+viam module upload --version 1.0.0 --platform linux/arm64 module.tar.gz
 ```
 
 > **Note:** Use `linux/arm64` for ARM machines (like Raspberry Pi).
