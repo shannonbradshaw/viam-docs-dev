@@ -31,7 +31,7 @@ async def main():
         ),
     )
 
-    camera = Camera.from_robot(robot, "newcam")
+    camera = Camera.from_robot(robot, "cam")
 
     # Get a 2D image
     images, _ = await camera.get_images()

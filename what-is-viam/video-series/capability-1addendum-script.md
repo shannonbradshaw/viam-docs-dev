@@ -15,7 +15,7 @@
 - Presenter on camera, bench arm visible in background
 
 *Presenter:*
-"You can configure every component individually — arm, camera, gripper, each with its own config block. But common hardware combinations are universal. Everyone using an xArm with a wrist-mounted RealSense and a gripper needs the same setup — same modules, same camera resolution, same frame offsets that put the point cloud in the right place in 3D space. Fragments let you capture that entire hardware stack once and share it."
+"You can configure every component individually — arm, camera, gripper, each with its own config block. But common hardware combinations are universal. Everyone using an xArm with a wrist-mounted RealSense camera and a gripper needs the same setup including the frame system that puts point clouds for detected objects in the right place in 3D space. Fragments let you capture the entire hardware stack, callibration, and frame system details once and share it."
 
 *Presenter guidance:*
 - "Configure every component individually" — this is what capability 1 showed. Each component gets a config block with its model, attributes, and frame. It works, but it's manual.
@@ -41,7 +41,7 @@
 - Click **Save**
 
 *Presenter (voiceover):*
-"Empty machine. I pull in the fragment — it has the full hardware stack. I provide three values: the arm's IP address, the camera's serial number, and a name for the arm. Save."
+"Empty machine. I pull in the fragment — this ensures that my robot has all the necessary hardware drivers and is configured properly to work in this 3D space. Fragments can be parameterized so that you can provide the necessary component-specific settings that vary from one robot to another. I provide three values: the arm's IP address, the camera's serial number, and a name for the arm. Save."
 
 *Presenter guidance:*
 - "Empty machine" — the machine has viam-server running but no hardware components configured. This is the starting point for any new machine.
@@ -57,7 +57,7 @@
 - Rotate the 3D view to show the point cloud is in the correct position relative to the arm and workspace
 
 *Presenter (voiceover):*
-"Arm is online. Camera is streaming. And look at the 3D view — the point cloud from the wrist camera is in the right place in 3D space, aligned with the arm and the workspace. That spatial alignment comes from frame offsets in the fragment — the hand-eye calibration result, the gripper geometry, all captured as configuration. Three values and a fragment got us here."
+"Arm is online. Camera is streaming. And look at the 3D view — the point cloud from the wrist camera is in the right place in 3D space, aligned with the arm and the workspace. That spatial alignment comes from frame offsets in the fragment — the hand-eye calibration result, the gripper geometry, all captured as part of a reusable configuration fragment.
 
 *Presenter guidance:*
 - "Point cloud is in the right place" — the RealSense produces points in its own coordinate frame. For those points to appear correctly in the 3D scene, Viam needs to know exactly where the camera is relative to the arm's end effector. The fragment includes these frame transforms: the camera is offset 83mm in X, -30mm in Y, 18mm in Z from the arm, rotated ~98 degrees. The gripper extends 150mm from the flange.
@@ -73,7 +73,9 @@
 - 3D view with point cloud still visible on laptop screen behind them
 
 *Presenter:*
-"Common hardware combinations shouldn't require starting from scratch. The modules, the camera settings, the calibrated frame relationships — all in one fragment. Anyone using this hardware combination pulls it in, provides their IP and serial number, and gets a fully configured robot with accurate 3D perception. That's shared configuration."
+"Common hardware combinations shouldn't require starting from scratch. The hardware drivers and other software modules you need, the camera settings, the calibrated frame relationships — all in one fragment. Anyone using this hardware combination pulls it in, provides their IP and camera serial number, and gets a fully configured robot with accurate 3D perception."
+
+"Fragments are also composable. I can build on top of this fragment with control logic that implements a specific robotic solution such as a pick and place application. I can then reuse that fragment across any number of robots in a fleet. Viam agent running on my robot compute machine communicates with the Viam registry to automatically download, install and maintain the software, ML models, and everything else configured in the fragment"
 
 *Presenter guidance:*
 - "Shouldn't require starting from scratch" — every person who sets up an xArm 6 + RealSense + gripper faces the same configuration work. Fragments eliminate the repetition.
